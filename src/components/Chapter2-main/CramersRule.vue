@@ -100,6 +100,7 @@ export default {
         },
         // ฟังก์ชันสำหรับการคำนวณ Cramer's Rule
         calculateCramersRule() {
+            this.solutions = [];
             try {
                 const originalMatrix = matrix(this.matrixA);
                 const determinantA = det(originalMatrix);
@@ -108,8 +109,6 @@ export default {
                     alert("The determinant of the coefficient matrix is zero. The system has no unique solution.");
                     return;
                 }
-
-                this.solutions = [];
 
                 for (let i = 0; i < this.numVariables; i++) {
                     // สร้างเมทริกซ์ใหม่แทนที่ column ที่ i ด้วย vector B

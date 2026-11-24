@@ -80,10 +80,28 @@ export default {
             this.vectorB = Array(this.numVariables).fill(0);
         },
         randomizeMatrices() {
-            this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 10).toFixed(2)));
+            const n = this.numVariables;
+            const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+
+            for (let i = 0; i < n; i++) {
+                for (let j = i; j < n; j++) {
+                    const value = Number((Math.random() * 5 + 1).toFixed(2));
+                    matrix[i][j] = value;
+                    matrix[j][i] = value;
+                }
+
+                let rowSum = 0;
+                for (let j = 0; j < n; j++) {
+                    if (i !== j) rowSum += Math.abs(matrix[i][j]);
+                }
+                matrix[i][i] = Number((rowSum * 1.5 + 1).toFixed(2));
+            }
+
+            this.matrixA = matrix.map(row => row.map(value => value.toFixed(2)));
             this.vectorB = this.vectorB.map(() => (Math.random() * 10).toFixed(2));
         },
         calculateConjugateGradient() {
+            this.solutions = [];
             try {
                 const n = this.numVariables;
                 const A = this.matrixA.map(row => row.map(value => parseFloat(value)));
@@ -94,11 +112,21 @@ export default {
                 let rsOld = r.reduce((acc, val) => acc + val * val, 0);
 
                 for (let iter = 0; iter < this.maxIterations; iter++) {
-                    let Ap = A.map(row => row.reduce((acc, aij, j) => acc + aij * p[j], 0));
-                    let alpha = rsOld / p.reduce((acc, pi, i) => acc + pi * Ap[i], 0);
+                    const Ap = A.map(row => row.reduce((acc, aij, j) => acc + aij * p[j], 0));
+                    const pAp = p.reduce((acc, pi, i) => acc + pi * Ap[i], 0);
+
+                    if (!Number.isFinite(pAp) || pAp === 0) {
+                        if (rsOld === 0) {
+                            break;
+                        }
+                        alert("The method cannot proceed with the given matrix. Please check your inputs.");
+                        return;
+                    }
+
+                    const alpha = rsOld / pAp;
                     x = x.map((xi, i) => xi + alpha * p[i]);
                     r = r.map((ri, i) => ri - alpha * Ap[i]);
-                    let rsNew = r.reduce((acc, val) => acc + val * val, 0);
+                    const rsNew = r.reduce((acc, val) => acc + val * val, 0);
 
                     if (Math.sqrt(rsNew) < this.tolerance) {
                         break;
@@ -106,6 +134,11 @@ export default {
 
                     p = r.map((ri, i) => ri + (rsNew / rsOld) * p[i]);
                     rsOld = rsNew;
+                }
+
+                if (x.some(value => !Number.isFinite(value))) {
+                    alert("The method produced invalid values. Please check your inputs.");
+                    return;
                 }
 
                 this.solutions = x.map(value => value.toFixed(6));

@@ -53,15 +53,24 @@ export default {
     },
     methods: {
         calculateSimpsonsRule() {
+            this.result = null;
             try {
-                const a = this.lowerLimit;
-                const b = this.upperLimit;
-                const n = this.numIntervals;
-                if (n % 2 !== 0) {
-                    alert("Number of intervals (n) must be even.");
+                const expression = (this.functionExpression || "").trim();
+                if (!expression) {
+                    alert("Please enter a function f(x).");
                     return;
                 }
-                const f = math.parse(this.functionExpression).compile();
+
+                const a = this.lowerLimit;
+                const b = this.upperLimit;
+                const n = Math.floor(this.numIntervals);
+
+                if (n < 2 || n % 2 !== 0) {
+                    alert("Number of intervals (n) must be an even number of at least 2.");
+                    return;
+                }
+
+                const f = math.parse(expression).compile();
                 const h = (b - a) / n;
 
                 let sum = 0;
@@ -77,7 +86,14 @@ export default {
                     }
                 }
 
-                this.result = (h / 3) * sum;
+                const result = (h / 3) * sum;
+
+                if (!Number.isFinite(result)) {
+                    alert("The function could not be evaluated on the given interval. Please check your inputs.");
+                    return;
+                }
+
+                this.result = result;
             } catch (error) {
                 console.error("Error calculating Simpson's Rule:", error);
                 alert("An error occurred while calculating the integral. Please check your inputs.");

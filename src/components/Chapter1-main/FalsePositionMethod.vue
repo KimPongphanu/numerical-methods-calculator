@@ -90,11 +90,30 @@ export default {
       const f = (x) => evaluate(this.functionInput, { x });
       let c;
       this.iterations = [];
+      this.result = null;
+
+      const fa = f(a);
+      const fb = f(b);
+
+      if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
+        alert("The function is not defined at the bounds. Please check your inputs.");
+        return;
+      }
+
+      if (fa * fb > 0) {
+        alert("The function must have different signs at the bounds a and b.");
+        return;
+      }
 
       let iterationCount = 0;
       do {
         c = (a * f(b) - b * f(a)) / (f(b) - f(a));
         const fc = f(c);
+
+        if (!Number.isFinite(fc)) {
+          alert("The function could not be evaluated inside the interval. Please check your inputs.");
+          return;
+        }
 
         this.iterations.push({
           a: a.toFixed(6),

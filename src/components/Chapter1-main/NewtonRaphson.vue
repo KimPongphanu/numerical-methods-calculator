@@ -96,6 +96,7 @@ export default {
 
         if (fpx === 0) {
           console.warn("Derivative is zero. Stopping iteration to avoid division by zero.");
+          x1 = x0;
           break;
         }
 

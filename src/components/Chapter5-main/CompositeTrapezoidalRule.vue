@@ -53,11 +53,24 @@ export default {
     },
     methods: {
         calculateTrapezoidalRule() {
+            this.result = null;
             try {
+                const expression = (this.functionExpression || "").trim();
+                if (!expression) {
+                    alert("Please enter a function f(x).");
+                    return;
+                }
+
                 const a = this.lowerLimit;
                 const b = this.upperLimit;
-                const n = this.numIntervals;
-                const f = math.parse(this.functionExpression).compile();
+                const n = Math.floor(this.numIntervals);
+
+                if (n < 1) {
+                    alert("Number of intervals (n) must be at least 1.");
+                    return;
+                }
+
+                const f = math.parse(expression).compile();
                 const h = (b - a) / n;
 
                 let sum = 0;
@@ -71,7 +84,14 @@ export default {
                     }
                 }
 
-                this.result = (h / 2) * sum;
+                const result = (h / 2) * sum;
+
+                if (!Number.isFinite(result)) {
+                    alert("The function could not be evaluated on the given interval. Please check your inputs.");
+                    return;
+                }
+
+                this.result = result;
             } catch (error) {
                 console.error("Error calculating Trapezoidal Rule:", error);
                 alert("An error occurred while calculating the integral. Please check your inputs.");

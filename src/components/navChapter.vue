@@ -17,7 +17,7 @@ export default {
         }
     },
     created() {
-        axios.get('http://localhost:3000/api/chapters')
+        axios.get('http://localhost:3001/api/chapters')
             .then(response => {
                 this.chaptersDB = response.data;
             })

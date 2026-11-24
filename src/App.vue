@@ -5,7 +5,7 @@
     <div>
       <section class="box1" style="display: flex">
         <h1>NUMERICAL METHOD</h1>
-        <h1 v-if="chaptersArray.length > 0"> >> {{ chaptersArray.chapter }}</h1>
+        <h1 v-if="chaptersArray.length > 0"> >> {{ chaptersArray[selectedChapterIndex].chapter }}</h1>
       </section>
     </div>
 
@@ -119,6 +119,9 @@
                 <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC5[3]">
                   <CompositeSimpsonRule />
                 </div>
+                <div v-else-if="chapterLists[selectedChapterIndex] && chapterLists[selectedChapterIndex].length > 0">
+                  <p class="notImplemented">This method is not implemented yet.</p>
+                </div>
               </div>
 
             </div>
@@ -221,7 +224,7 @@ export default {
       this.methodC4,
       this.methodC5
     ];
-    axios.get('http://localhost:3000/api/methods')
+    axios.get('http://localhost:3001/api/methods')
       .then(response => {
         if (response && response.data) {
           // วนลูปข้อมูลแต่ละแถวใน response.data
@@ -263,6 +266,8 @@ export default {
   methods: {
     handleChapterSelected(index) {
       this.selectedChapterIndex = index; // เก็บค่า index ที่ได้รับจาก navChapter
+      this.CurrentdropdownMenu = 0;
+      this.solution = null;
     },
     handleChapterArray(array) {
       this.chaptersArray = array;
@@ -459,5 +464,11 @@ body {
 
 .selected {
   background-color: rgb(255, 0, 0);
+}
+
+.notImplemented {
+  margin-top: 120px;
+  font-size: 24px;
+  color: #06113C;
 }
 </style>

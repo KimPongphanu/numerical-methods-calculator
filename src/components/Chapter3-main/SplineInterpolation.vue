@@ -68,8 +68,16 @@ export default {
             }));
         },
         calculateSplineInterpolation() {
+            this.splines = [];
             try {
                 const n = this.numPoints;
+                const xValues = this.dataPoints.map(point => point.x);
+
+                if (new Set(xValues).size !== xValues.length) {
+                    alert("Duplicate x values detected. Please enter unique x values.");
+                    return;
+                }
+
                 let splines = [];
 
                 for (let i = 0; i < n - 1; i++) {
@@ -80,6 +88,10 @@ export default {
 
                     // Linear spline equation between two points
                     const slope = (y1 - y0) / (x1 - x0);
+                    if (!Number.isFinite(slope)) {
+                        alert("The spline could not be calculated. Please check your inputs.");
+                        return;
+                    }
                     const spline = `y = ${slope.toFixed(6)} * (x - ${x0.toFixed(2)}) + ${y0.toFixed(6)}`;
 
                     splines.push(spline);

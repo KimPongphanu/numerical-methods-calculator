@@ -55,7 +55,11 @@ export default {
     },
     computed: {
         formattedPolynomial() {
-            return this.polynomial.replace(/\s\+\s-/g, ' - ').replace(/\*\s\(/g, ' * (').replace(/\/\s\(/g, '/(');
+            return this.polynomial
+                .replace(/\s\+\s-/g, ' - ')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/\s*\*\s*\(/g, ' * (')
+                .replace(/\s*\/\s*\(/g, '/(');
         }
     },
     methods: {
@@ -69,6 +73,7 @@ export default {
             }));
         },
         calculateLagrangePolynomial() {
+            this.polynomial = "";
             try {
                 const n = this.numPoints;
                 let terms = [];

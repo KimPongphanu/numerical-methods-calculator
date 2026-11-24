@@ -80,17 +80,39 @@ export default {
             this.vectorB = Array(this.numVariables).fill(0);
         },
         randomizeMatrices() {
-            this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 10).toFixed(2)));
+            const n = this.numVariables;
+            const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+
+            for (let i = 0; i < n; i++) {
+                let rowSum = 0;
+                for (let j = 0; j < n; j++) {
+                    if (i === j) continue;
+                    const value = Number((Math.random() * 10).toFixed(2));
+                    matrix[i][j] = value;
+                    rowSum += Math.abs(value);
+                }
+                matrix[i][i] = Number((rowSum * 1.5 + 1).toFixed(2));
+            }
+
+            this.matrixA = matrix.map(row => row.map(value => value.toFixed(2)));
             this.vectorB = this.vectorB.map(() => (Math.random() * 10).toFixed(2));
         },
         calculateJacobiIteration() {
+            this.solutions = [];
             try {
                 const n = this.numVariables;
                 const A = this.matrixA.map(row => row.map(value => parseFloat(value)));
                 const B = this.vectorB.map(value => parseFloat(value));
+
+                if (A.some((row, index) => row[index] === 0)) {
+                    alert("The coefficient matrix has a zero on the diagonal. Jacobi iteration cannot proceed.");
+                    return;
+                }
+
                 let x = Array(n).fill(0);
                 let newX = Array(n).fill(0);
                 let iterations = 0;
+                let converged = false;
 
                 while (iterations < this.maxIterations) {
                     for (let i = 0; i < n; i++) {
@@ -104,13 +126,25 @@ export default {
                     }
 
                     // Check for convergence
-                    let error = newX.reduce((acc, val, idx) => acc + Math.abs(val - x[idx]), 0);
+                    const error = newX.reduce((acc, val, idx) => acc + Math.abs(val - x[idx]), 0);
                     if (error < this.tolerance) {
+                        x = [...newX];
+                        converged = true;
                         break;
                     }
 
                     x = [...newX];
                     iterations++;
+                }
+
+                if (!converged) {
+                    alert(`The method did not converge within ${this.maxIterations} iterations.`);
+                    return;
+                }
+
+                if (x.some(value => !Number.isFinite(value))) {
+                    alert("The method produced invalid values. Please check your inputs.");
+                    return;
                 }
 
                 this.solutions = x.map(value => value.toFixed(6));

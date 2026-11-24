@@ -97,6 +97,7 @@ export default {
             this.vectorB = this.vectorB.map(() => parseFloat((Math.random() * 10).toFixed(2)));
         },
         calculateCholeskyDecomposition() {
+            this.solutions = [];
             try {
                 const n = this.numVariables;
                 const A = matrix(this.matrixA)._data;
@@ -149,6 +150,11 @@ export default {
                         sum += L[k][i] * x[k];
                     }
                     x[i] = (y[i] - sum) / L[i][i];
+                }
+
+                if (x.some(value => !Number.isFinite(value))) {
+                    alert("The system could not be solved with the given inputs.");
+                    return;
                 }
 
                 this.solutions = x.map(value => value.toFixed(6));

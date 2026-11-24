@@ -64,6 +64,7 @@ export default {
             }));
         },
         calculateLinearRegression() {
+            this.regressionEquation = "";
             try {
                 const n = this.numPoints;
                 const sumX = this.dataPoints.reduce((sum, point) => sum + point.x, 0);
@@ -71,8 +72,19 @@ export default {
                 const sumXY = this.dataPoints.reduce((sum, point) => sum + point.x * point.y, 0);
                 const sumX2 = this.dataPoints.reduce((sum, point) => sum + point.x * point.x, 0);
 
-                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+                const denominator = n * sumX2 - sumX * sumX;
+                if (denominator === 0) {
+                    alert("The x values must not all be equal. Please check your inputs.");
+                    return;
+                }
+
+                const slope = (n * sumXY - sumX * sumY) / denominator;
                 const intercept = (sumY - slope * sumX) / n;
+
+                if (!Number.isFinite(slope) || !Number.isFinite(intercept)) {
+                    alert("The regression could not be calculated. Please check your inputs.");
+                    return;
+                }
 
                 this.regressionEquation = `y = ${slope.toFixed(6)} * x + ${intercept.toFixed(6)}`;
             } catch (error) {

@@ -10,8 +10,6 @@
                     <input type="number" v-model.number="lowerLimit" />
                     <label>Upper Limit (b):</label>
                     <input type="number" v-model.number="upperLimit" />
-                    <label>Number of Intervals (n):</label>
-                    <input type="number" v-model.number="numIntervals" min="1" />
                 </div>
 
                 <!-- Function Section -->
@@ -47,32 +45,32 @@ export default {
         return {
             lowerLimit: 0,
             upperLimit: 1,
-            numIntervals: 1,
             functionExpression: "",
             result: null
         };
     },
     methods: {
         calculateTrapezoidalRule() {
+            this.result = null;
             try {
-                const a = this.lowerLimit;
-                const b = this.upperLimit;
-                const n = this.numIntervals;
-                const f = math.parse(this.functionExpression).compile();
-                const h = (b - a) / n;
-
-                let sum = 0;
-                for (let i = 0; i <= n; i++) {
-                    const x = a + i * h;
-                    const fx = f.evaluate({ x });
-                    if (i === 0 || i === n) {
-                        sum += fx;
-                    } else {
-                        sum += 2 * fx;
-                    }
+                const expression = (this.functionExpression || "").trim();
+                if (!expression) {
+                    alert("Please enter a function f(x).");
+                    return;
                 }
 
-                this.result = (h / 2) * sum;
+                const a = this.lowerLimit;
+                const b = this.upperLimit;
+                const f = math.parse(expression).compile();
+                const h = b - a;
+                const result = (h / 2) * (f.evaluate({ x: a }) + f.evaluate({ x: b }));
+
+                if (!Number.isFinite(result)) {
+                    alert("The function could not be evaluated on the given interval. Please check your inputs.");
+                    return;
+                }
+
+                this.result = result;
             } catch (error) {
                 console.error("Error calculating Trapezoidal Rule:", error);
                 alert("An error occurred while calculating the integral. Please check your inputs.");
@@ -89,10 +87,8 @@ export default {
             this.functionExpression = functions[Math.floor(Math.random() * functions.length)];
         },
         randomizeDataPoints() {
-            // Example function for randomizing data points if necessary
             this.lowerLimit = parseFloat((Math.random() * 10).toFixed(2));
             this.upperLimit = parseFloat((Math.random() * 10 + this.lowerLimit).toFixed(2));
-            this.numIntervals = Math.floor(Math.random() * 10) + 1;
         }
     }
 };

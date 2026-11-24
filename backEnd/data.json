@@ -1,0 +1,38 @@
+{
+  "chapters": [
+    { "id": 1, "chapter": "Root Of Equation" },
+    { "id": 2, "chapter": "Linear Algebra" },
+    { "id": 3, "chapter": "InterPolation" },
+    { "id": 4, "chapter": "Least Square Regression" },
+    { "id": 5, "chapter": "Intergration" }
+  ],
+  "methods": [
+    { "method": "Bisection Method", "chapter": 1 },
+    { "method": "False Position", "chapter": 1 },
+    { "method": "One Point Itreation", "chapter": 1 },
+    { "method": "Secant Method", "chapter": 1 },
+    { "method": "Newton Rapson", "chapter": 1 },
+    { "method": "Cramer's Rule", "chapter": 2 },
+    { "method": "Gauss's Elimination Method", "chapter": 2 },
+    { "method": "Gauss Jordan Method", "chapter": 2 },
+    { "method": "Inverse Matrix Method", "chapter": 2 },
+    { "method": "LU Decomposition Method", "chapter": 2 },
+    { "method": "Cholesky Decomposition Method", "chapter": 2 },
+    { "method": "Jacobi Iteration Method", "chapter": 2 },
+    { "method": "Gauss-Seidel Iteration Method", "chapter": 2 },
+    { "method": "Conjugate Gradient Method", "chapter": 2 },
+    { "method": "Newton's Divided Differences", "chapter": 3 },
+    { "method": "Lagrange polynomials", "chapter": 3 },
+    { "method": "Spline interpolation", "chapter": 3 },
+    { "method": "LINEAR REGRESSION", "chapter": 4 },
+    { "method": "POLYNOMIAL REGRESSION", "chapter": 4 },
+    { "method": "MULTIPLE LINEAR REGRESSION", "chapter": 4 },
+    { "method": "Trapezoidal Rule", "chapter": 5 },
+    { "method": "Composite Trapezoidal Rule", "chapter": 5 },
+    { "method": "Simpson's Rule", "chapter": 5 },
+    { "method": "Composite Simpson's Rule", "chapter": 5 },
+    { "method": "Newton Cotes Integration Formulas", "chapter": 5 },
+    { "method": "Romberg Integration", "chapter": 5 },
+    { "method": "Gauss Quadrature", "chapter": 5 }
+  ]
+}

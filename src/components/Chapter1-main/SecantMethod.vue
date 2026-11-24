@@ -90,12 +90,14 @@ export default {
       const f = (x) => evaluate(this.functionInput, { x });
       this.iterations = [];
       let x2;
+      let delta;
       let iterationCount = 0;
       const maxIterations = 1000;
 
       do {
         x2 = x1 - (f(x1) * (x1 - x0)) / (f(x1) - f(x0));
         const fx2 = f(x2);
+        delta = Math.abs(x2 - x1);
 
         this.iterations.push({
           x0: x0.toFixed(6),
@@ -104,7 +106,7 @@ export default {
           fx2: fx2.toFixed(6),
         });
 
-        if (Math.abs(x2 - x1) < this.tolerance) {
+        if (delta < this.tolerance) {
           break;
         }
 
@@ -116,7 +118,7 @@ export default {
           console.warn("Reached maximum iteration limit");
           break;
         }
-      } while (Math.abs(x2 - x1) >= this.tolerance);
+      } while (delta >= this.tolerance);
 
       this.result = x2.toFixed(6);
     },

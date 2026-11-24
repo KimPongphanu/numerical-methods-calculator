@@ -78,6 +78,7 @@ export default {
             }));
         },
         calculateMultipleLinearRegression() {
+            this.coefficients = [];
             try {
                 const X = this.dataPoints.map(point => [1, ...point.features]);
                 const Y = this.dataPoints.map(point => point.y);
@@ -91,6 +92,11 @@ export default {
                 const XTXInv = math.inv(XTX);
                 const XTY = math.multiply(XT, Y);
                 const coefficients = math.multiply(XTXInv, XTY);
+
+                if (coefficients.some(value => !Number.isFinite(value))) {
+                    alert("The coefficients could not be calculated. Please check your inputs.");
+                    return;
+                }
 
                 this.coefficients = coefficients;
             } catch (error) {

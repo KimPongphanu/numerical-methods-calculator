@@ -83,13 +83,21 @@ export default {
             this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
         },
         calculateInverseMatrix() {
+            this.solutions = [];
             try {
                 const originalMatrix = matrix(this.matrixA);
                 const inverseMatrix = inv(originalMatrix);
                 const constants = matrix(this.vectorB);
 
                 const result = multiply(inverseMatrix, constants);
-                this.solutions = result._data.map(value => value.toFixed(6));
+                const values = result._data;
+
+                if (values.some(value => !Number.isFinite(value))) {
+                    alert("The system could not be solved with the given inputs.");
+                    return;
+                }
+
+                this.solutions = values.map(value => value.toFixed(6));
             } catch (error) {
                 console.error("Error calculating Inverse Matrix Method:", error);
                 alert("An error occurred while calculating the solutions. Please check your inputs.");

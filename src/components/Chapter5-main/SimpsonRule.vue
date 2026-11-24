@@ -10,8 +10,6 @@
                     <input type="number" v-model.number="lowerLimit" />
                     <label>Upper Limit (b):</label>
                     <input type="number" v-model.number="upperLimit" />
-                    <label>Number of Intervals (n, even number):</label>
-                    <input type="number" v-model.number="numIntervals" min="2" step="2" />
                 </div>
 
                 <!-- Function Section -->
@@ -46,38 +44,36 @@ export default {
         return {
             lowerLimit: 0,
             upperLimit: 1,
-            numIntervals: 2,
             functionExpression: "",
             result: null
         };
     },
     methods: {
         calculateSimpsonsRule() {
+            this.result = null;
             try {
-                const a = this.lowerLimit;
-                const b = this.upperLimit;
-                const n = this.numIntervals;
-                if (n % 2 !== 0) {
-                    alert("Number of intervals (n) must be even.");
+                const expression = (this.functionExpression || "").trim();
+                if (!expression) {
+                    alert("Please enter a function f(x).");
                     return;
                 }
-                const f = math.parse(this.functionExpression).compile();
-                const h = (b - a) / n;
 
-                let sum = 0;
-                for (let i = 0; i <= n; i++) {
-                    const x = a + i * h;
-                    const fx = f.evaluate({ x });
-                    if (i === 0 || i === n) {
-                        sum += fx;
-                    } else if (i % 2 === 0) {
-                        sum += 2 * fx;
-                    } else {
-                        sum += 4 * fx;
-                    }
+                const a = this.lowerLimit;
+                const b = this.upperLimit;
+                const midpoint = (a + b) / 2;
+                const f = math.parse(expression).compile();
+                const h = (b - a) / 2;
+
+                const result = (h / 3) * (
+                    f.evaluate({ x: a }) + 4 * f.evaluate({ x: midpoint }) + f.evaluate({ x: b })
+                );
+
+                if (!Number.isFinite(result)) {
+                    alert("The function could not be evaluated on the given interval. Please check your inputs.");
+                    return;
                 }
 
-                this.result = (h / 3) * sum;
+                this.result = result;
             } catch (error) {
                 console.error("Error calculating Simpson's Rule:", error);
                 alert("An error occurred while calculating the integral. Please check your inputs.");
@@ -94,7 +90,6 @@ export default {
             this.functionExpression = functions[Math.floor(Math.random() * functions.length)];
             this.lowerLimit = parseFloat((Math.random() * 10).toFixed(2));
             this.upperLimit = parseFloat((Math.random() * 10 + this.lowerLimit).toFixed(2));
-            this.numIntervals = Math.floor(Math.random() * 10 / 2) * 2 + 2; // Ensure even number
         }
     }
 };

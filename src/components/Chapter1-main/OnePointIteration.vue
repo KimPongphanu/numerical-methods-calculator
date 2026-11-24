@@ -75,6 +75,7 @@ export default {
         calculateIteration() {
             let x0 = this.initialGuess;
             let x1;
+            let delta;
             const g = (x) => evaluate(this.functionInput, { x });
             this.iterations = [];
 
@@ -83,13 +84,14 @@ export default {
 
             do {
                 x1 = g(x0);
+                delta = Math.abs(x1 - x0);
 
                 this.iterations.push({
                     x: x0.toFixed(6),
                     gx: x1.toFixed(6),
                 });
 
-                if (Math.abs(x1 - x0) < this.tolerance) {
+                if (delta < this.tolerance) {
                     break;
                 }
 
@@ -100,7 +102,7 @@ export default {
                     console.warn("Reached maximum iteration limit");
                     break;
                 }
-            } while (Math.abs(x1 - x0) >= this.tolerance);
+            } while (delta >= this.tolerance);
 
             this.result = x1.toFixed(6);
         }

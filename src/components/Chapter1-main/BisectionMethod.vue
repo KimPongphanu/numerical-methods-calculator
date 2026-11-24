@@ -98,12 +98,33 @@ export default {
             const f = (x) => evaluate(this.functionInput, { x });
             let c;
             this.iterations = []; // รีเซ็ตการเก็บข้อมูลในแต่ละรอบ
+            this.result = null;
+
+            const fa = f(a);
+            const fb = f(b);
+
+            if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
+                alert("The function is not defined at the bounds. Please check your inputs.");
+                return;
+            }
+
+            if (fa * fb > 0) {
+                alert("The function must have different signs at the bounds a and b.");
+                return;
+            }
+
+            c = (a + b) / 2;
 
             // เริ่มทำการวนลูปหาผลลัพธ์
             let iterationCount = 0;
             while ((b - a) / 2 > this.tolerance) {
                 c = (a + b) / 2;
                 const fc = f(c);
+
+                if (!Number.isFinite(fc)) {
+                    alert("The function could not be evaluated inside the interval. Please check your inputs.");
+                    return;
+                }
 
                 // เก็บข้อมูลของแต่ละรอบการคำนวณ
                 this.iterations.push({

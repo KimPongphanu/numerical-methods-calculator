@@ -68,8 +68,16 @@ export default {
             }));
         },
         calculateDividedDifferences() {
+            this.coefficients = [];
             try {
                 const n = this.numPoints;
+                const xValues = this.dataPoints.map(point => point.x);
+
+                if (new Set(xValues).size !== xValues.length) {
+                    alert("Duplicate x values detected. Please enter unique x values.");
+                    return;
+                }
+
                 let table = this.dataPoints.map(point => [point.y]);
                 for (let j = 1; j < n; j++) {
                     for (let i = 0; i < n - j; i++) {
@@ -78,6 +86,12 @@ export default {
                         table[i].push(numerator / denominator);
                     }
                 }
+
+                if (table[0].some(value => !Number.isFinite(value))) {
+                    alert("The coefficients could not be calculated. Please check your inputs.");
+                    return;
+                }
+
                 this.coefficients = table[0];
             } catch (error) {
                 console.error("Error calculating Newton's Divided Differences:", error);

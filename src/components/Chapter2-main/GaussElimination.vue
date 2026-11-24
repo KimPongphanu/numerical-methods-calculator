@@ -81,8 +81,9 @@ export default {
             this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
         },
         calculateGaussElimination() {
+            this.solutions = [];
             try {
-                const augmentedMatrix = this.matrixA.map((row, index) => [...row, parseFloat(this.vectorB[index])]);
+                const augmentedMatrix = this.matrixA.map((row, index) => [...row.map(Number), parseFloat(this.vectorB[index])]);
                 const n = this.numVariables;
 
                 for (let i = 0; i < n; i++) {
@@ -95,6 +96,11 @@ export default {
 
                     [augmentedMatrix[i], augmentedMatrix[maxRow]] = [augmentedMatrix[maxRow], augmentedMatrix[i]];
 
+                    if (augmentedMatrix[i][i] === 0) {
+                        alert("The system has no unique solution. Please check your inputs.");
+                        return;
+                    }
+
                     for (let k = i + 1; k < n; k++) {
                         const factor = augmentedMatrix[k][i] / augmentedMatrix[i][i];
                         for (let j = i; j <= n; j++) {
@@ -103,14 +109,25 @@ export default {
                     }
                 }
 
-                this.solutions = Array(n).fill(0);
+                const values = Array(n).fill(0);
                 for (let i = n - 1; i >= 0; i--) {
                     let sum = augmentedMatrix[i][n];
                     for (let j = i + 1; j < n; j++) {
-                        sum -= augmentedMatrix[i][j] * this.solutions[j];
+                        sum -= augmentedMatrix[i][j] * values[j];
                     }
-                    this.solutions[i] = (sum / augmentedMatrix[i][i]).toFixed(6);
+                    if (augmentedMatrix[i][i] === 0) {
+                        alert("The system has no unique solution. Please check your inputs.");
+                        return;
+                    }
+                    values[i] = sum / augmentedMatrix[i][i];
                 }
+
+                if (values.some(value => !Number.isFinite(value))) {
+                    alert("The system could not be solved with the given inputs.");
+                    return;
+                }
+
+                this.solutions = values.map(value => value.toFixed(6));
             } catch (error) {
                 console.error("Error calculating Gauss's Elimination:", error);
                 alert("An error occurred while calculating the solutions. Please check your inputs.");

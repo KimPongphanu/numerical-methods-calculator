@@ -5,9 +5,11 @@
             <div id="box-left">
                 <!-- Section Title -->
                 <div id="box-11">
-                    <h3>Linear Regression</h3>
+                    <h3>Polynomial Regression</h3>
                     <label>Number of Data Points (n):</label>
                     <input type="number" v-model.number="numPoints" min="2" max="10" @change="initializeData" />
+                    <label>Polynomial Degree (d):</label>
+                    <input type="number" v-model.number="degree" min="1" max="5" />
                 </div>
 
                 <!-- Data Points Section -->
@@ -28,14 +30,15 @@
             <div id="box-last">
                 <div id="box-14">
                     <button @click="randomizeDataPoints">Randomize Test Data</button>
-                    <button @click="calculateLinearRegression">Calculate</button>
+                    <button @click="calculatePolynomialRegression">Calculate</button>
                 </div>
                 <!-- Output Section -->
                 <div id="box-2" v-if="coefficients.length > 0">
-                    <h4>Linear Regression Coefficients:</h4>
+                    <h4>Polynomial Regression Coefficients:</h4>
                     <ul>
-                        <li>Intercept (a0) = {{ coefficients[0].toFixed(4) }}</li>
-                        <li>Slope (a1) = {{ coefficients[1].toFixed(4) }}</li>
+                        <li v-for="(coef, index) in coefficients" :key="'coef-' + index">
+                            a{{ index }} = {{ coef.toFixed(4) }}
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -44,12 +47,14 @@
 </template>
 
 <script>
+import * as math from "mathjs";
 
 export default {
-    name: "LinearRegression",
+    name: "PolynomialRegression",
     data() {
         return {
-            numPoints: 2,
+            numPoints: 3,
+            degree: 2,
             dataPoints: [],
             coefficients: []
         };
@@ -67,23 +72,47 @@ export default {
                 y: parseFloat((Math.random() * 10).toFixed(2))
             }));
         },
-        calculateLinearRegression() {
+        calculatePolynomialRegression() {
+            this.coefficients = [];
             try {
                 const n = this.numPoints;
+                const degree = Math.floor(this.degree);
+
+                if (degree < 1 || n <= degree) {
+                    alert("The number of data points must be greater than the polynomial degree.");
+                    return;
+                }
+
                 const xValues = this.dataPoints.map(point => point.x);
-                const yValues = this.dataPoints.map(point => point.y);
+                if (new Set(xValues).size !== xValues.length) {
+                    alert("Duplicate x values detected. Please enter unique x values.");
+                    return;
+                }
 
-                const sumX = xValues.reduce((acc, x) => acc + x, 0);
-                const sumY = yValues.reduce((acc, y) => acc + y, 0);
-                const sumXY = xValues.reduce((acc, x, i) => acc + x * yValues[i], 0);
-                const sumX2 = xValues.reduce((acc, x) => acc + x * x, 0);
+                const X = this.dataPoints.map(point =>
+                    Array.from({ length: degree + 1 }, (_, power) => Math.pow(point.x, power))
+                );
+                const Y = this.dataPoints.map(point => point.y);
 
-                const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-                const intercept = (sumY - slope * sumX) / n;
+                const XT = math.transpose(X);
+                const XTX = math.multiply(XT, X);
 
-                this.coefficients = [intercept, slope];
+                if (math.det(XTX) === 0) {
+                    alert("The system is singular. Please check your data points.");
+                    return;
+                }
+
+                const rawCoefficients = math.multiply(math.inv(XTX), math.multiply(XT, Y));
+                const coefficients = (Array.isArray(rawCoefficients) ? rawCoefficients : rawCoefficients.valueOf()).flat();
+
+                if (coefficients.some(value => !Number.isFinite(value))) {
+                    alert("The coefficients could not be calculated. Please check your inputs.");
+                    return;
+                }
+
+                this.coefficients = coefficients;
             } catch (error) {
-                console.error("Error calculating Linear Regression:", error);
+                console.error("Error calculating Polynomial Regression:", error);
                 alert("An error occurred while calculating the coefficients. Please check your inputs.");
             }
         }

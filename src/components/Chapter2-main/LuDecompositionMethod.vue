@@ -6,7 +6,7 @@
             <div id="box-left">
                 <!-- Section Title -->
                 <div id="box-11">
-                    <h3>Cholesky Decomposition Method</h3>
+                    <h3>LU Decomposition Method</h3>
                     <label>Number of Variables (n):</label>
                     <input type="number" v-model.number="numVariables" min="2" max="4" @change="initializeMatrices" />
                 </div>
@@ -40,7 +40,7 @@
             <div id="box-last">
                 <div id="box-14">
                     <button @click="randomizeMatrices">Randomize Test Data</button>
-                    <button @click="calculateCholeskyDecomposition">Calculate</button>
+                    <button @click="calculateLuDecomposition">Calculate</button>
                 </div>
                 <!-- Output Section -->
                 <div id="box-2" v-if="solutions.length > 0">
@@ -57,10 +57,8 @@
 </template>
 
 <script>
-import { matrix } from "mathjs";
-
 export default {
-    name: "CholeskyDecompositionMethod",
+    name: "LuDecompositionMethod",
     data() {
         return {
             numVariables: 2,
@@ -80,80 +78,78 @@ export default {
             this.vectorB = Array(this.numVariables).fill(0);
         },
         randomizeMatrices() {
-            let symmetricMatrix = Array.from({ length: this.numVariables }, () =>
-                Array(this.numVariables).fill(0).map(() => Math.random() * 5 + 1) // Generate positive values to ensure semi-definiteness
-            );
-
-            // Make the matrix symmetric and positive semi-definite
-            for (let i = 0; i < this.numVariables; i++) {
-                for (let j = i; j < this.numVariables; j++) {
-                    symmetricMatrix[j][i] = symmetricMatrix[i][j];
-                }
-                // Ensure diagonal elements are large enough to make the matrix positive definite
-                symmetricMatrix[i][i] += this.numVariables;
-            }
-
-            this.matrixA = symmetricMatrix.map(row => row.map(value => value.toFixed(2)));
-            this.vectorB = this.vectorB.map(() => (Math.random() * 10).toFixed(2));
+            this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 20 - 10).toFixed(2)));
+            this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
         },
-        calculateCholeskyDecomposition() {
+        calculateLuDecomposition() {
+            this.solutions = [];
             try {
                 const n = this.numVariables;
-                const A = matrix(this.matrixA)._data;
-                const B = matrix(this.vectorB)._data;
+                const A = this.matrixA.map(row => row.map(Number));
+                const b = this.vectorB.map(Number);
+                const L = Array.from({ length: n }, () => Array(n).fill(0));
+                const U = A.map(row => [...row]);
+                const permutation = Array.from({ length: n }, (_, index) => index);
 
-                // Check if matrix A is positive semi-definite
                 for (let i = 0; i < n; i++) {
-                    if (A[i][i] <= 0) {
-                        alert("The coefficient matrix must be positive semi-definite. Please check your inputs.");
+                    let pivotRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                        if (Math.abs(U[k][i]) > Math.abs(U[pivotRow][i])) {
+                            pivotRow = k;
+                        }
+                    }
+
+                    if (U[pivotRow][i] === 0) {
+                        alert("The coefficient matrix is singular. The system has no unique solution.");
                         return;
                     }
-                }
 
-                // Perform Cholesky Decomposition
-                let L = Array(n).fill(0).map(() => Array(n).fill(0));
-
-                for (let i = 0; i < n; i++) {
-                    for (let j = 0; j <= i; j++) {
-                        let sum = 0;
-                        for (let k = 0; k < j; k++) {
-                            sum += L[i][k] * L[j][k];
-                        }
-                        if (i === j) {
-                            if (A[i][i] - sum <= 0) {
-                                alert("The coefficient matrix must be positive semi-definite. Please check your inputs.");
-                                return;
-                            }
-                            L[i][j] = Math.sqrt(A[i][i] - sum);
-                        } else {
-                            L[i][j] = (A[i][j] - sum) / L[j][j];
+                    if (pivotRow !== i) {
+                        [U[i], U[pivotRow]] = [U[pivotRow], U[i]];
+                        [permutation[i], permutation[pivotRow]] = [permutation[pivotRow], permutation[i]];
+                        for (let k = 0; k < i; k++) {
+                            [L[i][k], L[pivotRow][k]] = [L[pivotRow][k], L[i][k]];
                         }
                     }
-                }
 
-                // Solve Ly = B
-                let y = Array(n).fill(0);
-                for (let i = 0; i < n; i++) {
-                    let sum = 0;
-                    for (let k = 0; k < i; k++) {
-                        sum += L[i][k] * y[k];
-                    }
-                    y[i] = (B[i] - sum) / L[i][i];
-                }
-
-                // Solve L^T x = y
-                let x = Array(n).fill(0);
-                for (let i = n - 1; i >= 0; i--) {
-                    let sum = 0;
+                    L[i][i] = 1;
                     for (let k = i + 1; k < n; k++) {
-                        sum += L[k][i] * x[k];
+                        const factor = U[k][i] / U[i][i];
+                        L[k][i] = factor;
+                        for (let j = i; j < n; j++) {
+                            U[k][j] -= factor * U[i][j];
+                        }
                     }
-                    x[i] = (y[i] - sum) / L[i][i];
+                }
+
+                const permutedB = permutation.map(index => b[index]);
+
+                const y = Array(n).fill(0);
+                for (let i = 0; i < n; i++) {
+                    let sum = permutedB[i];
+                    for (let k = 0; k < i; k++) {
+                        sum -= L[i][k] * y[k];
+                    }
+                    y[i] = sum;
+                }
+
+                const x = Array(n).fill(0);
+                for (let i = n - 1; i >= 0; i--) {
+                    let sum = y[i];
+                    for (let k = i + 1; k < n; k++) {
+                        sum -= U[i][k] * x[k];
+                    }
+                    x[i] = sum / U[i][i];
+                }
+
+                if (x.some(value => !Number.isFinite(value))) {
+                    alert("The system could not be solved with the given inputs.");
+                    return;
                 }
 
                 this.solutions = x.map(value => value.toFixed(6));
             } catch (error) {
-                console.error("Error calculating Cholesky Decomposition Method:", error);
+                console.error("Error calculating LU Decomposition Method:", error);
                 alert("An error occurred while calculating the solutions. Please check your inputs.");
             }
         }

@@ -81,8 +81,9 @@ export default {
             this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
         },
         calculateGaussJordan() {
+            this.solutions = [];
             try {
-                const augmentedMatrix = this.matrixA.map((row, index) => [...row, parseFloat(this.vectorB[index])]);
+                const augmentedMatrix = this.matrixA.map((row, index) => [...row.map(Number), parseFloat(this.vectorB[index])]);
                 const n = this.numVariables;
 
                 for (let i = 0; i < n; i++) {
@@ -96,6 +97,11 @@ export default {
                     [augmentedMatrix[i], augmentedMatrix[maxRow]] = [augmentedMatrix[maxRow], augmentedMatrix[i]];
 
                     const pivot = augmentedMatrix[i][i];
+                    if (pivot === 0) {
+                        alert("The system has no unique solution. Please check your inputs.");
+                        return;
+                    }
+
                     for (let j = 0; j <= n; j++) {
                         augmentedMatrix[i][j] /= pivot;
                     }
@@ -110,7 +116,13 @@ export default {
                     }
                 }
 
-                this.solutions = augmentedMatrix.map(row => row[n].toFixed(6));
+                const values = augmentedMatrix.map(row => row[n]);
+                if (values.some(value => !Number.isFinite(value))) {
+                    alert("The system could not be solved with the given inputs.");
+                    return;
+                }
+
+                this.solutions = values.map(value => value.toFixed(6));
             } catch (error) {
                 console.error("Error calculating Gauss Jordan Method:", error);
                 alert("An error occurred while calculating the solutions. Please check your inputs.");

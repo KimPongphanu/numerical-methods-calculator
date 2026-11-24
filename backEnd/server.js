@@ -1,48 +1,27 @@
 const express = require('express');
-const mysql = require('mysql');
-const cors = require('cors'); // เพิ่มการนำเข้า cors
+const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
-const port = 3000;
+const port = 3001;
 
 app.use(cors());
 
-
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'numerical'
-});
-
-db.connect(err => {
-  if (err) {
-    throw err;
-  }
-  console.log('Connected to MySQL');
-});
+const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json'), 'utf8'));
 
 app.get('/api/chapters', (req, res) => {
-  const sql = 'SELECT id, chapter FROM lesson';
-  db.query(sql, (err, result) => {
-    if (err) {
-      return res.status(500).send(err);
-    }
-    res.json(result);
+  res.json(data.chapters);
+});
+
+app.get('/api/methods', (req, res) => {
+  res.json(data.methods);
+});
+
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
   });
-});
+}
 
-app.get('/api/methods',(req,res) =>{
-  const sql = 'SELECT method , chapter FROM method';
-  db.query(sql,(err,result) =>{
-    if(err){
-      return res.status(500).send(err);
-    }
-    res.json(result);
-  })
-})
-
-
-
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-});
+module.exports = app;
