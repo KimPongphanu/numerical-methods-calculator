@@ -4,18 +4,14 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "server": "node backEnd/server.js",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
-    "axios": "^1.7.7",
     "chart.js": "^4.4.6",
     "core-js": "^3.8.3",
-    "cors": "^2.8.5",
-    "express": "^4.21.1",
     "mathjs": "^13.2.0",
     "vue": "^3.2.13",
     "vue-chartjs": "^5.3.2"

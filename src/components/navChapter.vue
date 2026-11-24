@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import axios from 'axios';
+import { chapters } from '../data/methods.js';
 export default {
     data() {
         return {
@@ -17,13 +17,7 @@ export default {
         }
     },
     created() {
-        axios.get('http://localhost:3001/api/chapters')
-            .then(response => {
-                this.chaptersDB = response.data;
-            })
-            .catch(error => {
-                console.error('Error fetching chapters:', error);
-            });
+        this.chaptersDB = chapters;
     },
     methods: {
         selection(index) {

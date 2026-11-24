@@ -168,7 +168,7 @@ import CompositeSimpsonRule from './components/Chapter5-main/CompositeSimpsonRul
 
 
 
-import axios from 'axios';
+import { methods } from './data/methods.js';
 
 export default {
   name: 'App',
@@ -224,44 +224,28 @@ export default {
       this.methodC4,
       this.methodC5
     ];
-    axios.get('http://localhost:3001/api/methods')
-      .then(response => {
-        if (response && response.data) {
-          // วนลูปข้อมูลแต่ละแถวใน response.data
-          response.data.forEach(item => {
-            switch (item.chapter) {
-              case 1:
-                this.methodC1.push(item);
-                // console.log(item);
-                break;
-              case 2:
-                this.methodC2.push(item);
-                // console.log(item);
-                break;
-              case 3:
-                this.methodC3.push(item);
-                // console.log(item);
-                break;
-              case 4:
-                this.methodC4.push(item);
-                // console.log(item);
-                break;
-              case 5:
-                this.methodC5.push(item);
-                // console.log(item);
-                break;
-              default:
-                console.warn('Chapter not found in response data:', item.chapter);
-                break;
-            }
-          });
-        } else {
-          console.warn('Invalid response data:', response.data);
-        }
-      })
-      .catch(error => {
-        console.error('Error fetching methods:', error);
-      });
+    methods.forEach(item => {
+      switch (item.chapter) {
+        case 1:
+          this.methodC1.push(item);
+          break;
+        case 2:
+          this.methodC2.push(item);
+          break;
+        case 3:
+          this.methodC3.push(item);
+          break;
+        case 4:
+          this.methodC4.push(item);
+          break;
+        case 5:
+          this.methodC5.push(item);
+          break;
+        default:
+          console.warn('Chapter not found in data:', item.chapter);
+          break;
+      }
+    });
   },
   methods: {
     handleChapterSelected(index) {

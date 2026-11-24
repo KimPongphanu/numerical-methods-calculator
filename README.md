@@ -1,5 +1,8 @@
 # numerical
 
+Frontend-only numerical methods calculator. All chapter/method data and the
+calculations run in the browser — no backend, server, or database is required.
+
 ## Project setup
 ```
 npm install
@@ -13,6 +16,11 @@ npm run serve
 ### Compiles and minifies for production
 ```
 npm run build
+```
+
+### Runs the unit tests
+```
+npm test
 ```
 
 ### Lints and fixes files
