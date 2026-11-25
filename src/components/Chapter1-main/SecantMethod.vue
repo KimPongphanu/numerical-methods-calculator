@@ -1,83 +1,139 @@
 <template>
-  <div class="container">
-    <!-- Input Section -->
-    <div id="box-1">
-      <h3>Secant Method</h3>
-      <div>
-        <label>f(x):</label>
-        <input v-model="functionInput" placeholder="Enter function" />
-        <button @click="randomFunction" id="btn1">Random</button>
+  <MethodLayout title="Secant Method">
+    <template #inputs>
+      <div class="field">
+        <label>f(x)</label>
+        <input v-model="functionInput" placeholder="e.g. x^2 - 4" />
       </div>
-      <div>
-        <label>Initial Guess 1 (x0):</label>
-        <input type="number" v-model.number="x0" />
+      <div class="field-row">
+        <div class="field">
+          <label>Initial guess x₀</label>
+          <input type="number" v-model.number="x0" />
+        </div>
+        <div class="field">
+          <label>Initial guess x₁</label>
+          <input type="number" v-model.number="x1" />
+        </div>
       </div>
-      <div>
-        <label>Initial Guess 2 (x1):</label>
-        <input type="number" v-model.number="x1" />
+      <div class="field">
+        <label>Tolerance ε</label>
+        <input type="number" v-model.number="tolerance" step="0.0001" />
       </div>
-      <div>
-        <label>Tolerance (ε):</label>
-        <input type="number" v-model.number="tolerance" />
-      </div>
-      <button @click="calculateSecant" id="btn2">Calculate</button>
-    </div>
+    </template>
 
-    <!-- Output Section -->
-    <div id="box-2" v-if="iterations.length > 0">
-      <h4>Iterations:</h4>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>Iteration</th>
-            <th>x0</th>
-            <th>x1</th>
-            <th>x2</th>
-            <th>f(x2)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(iteration, index) in iterations" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>{{ iteration.x0 }}</td>
-            <td>{{ iteration.x1 }}</td>
-            <td>{{ iteration.x2 }}</td>
-            <td>{{ iteration.fx2 }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-if="result !== null">
-        <h4>Final Result:</h4>
-        <p>Root: {{ result }}</p>
-      </div>
-    </div>
-  </div>
+    <template #buttons>
+      <MethodButtons @random="randomFunction" @calculate="calculateSecant" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="result !== null">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Root</div>
+            <div class="value">{{ result }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Error |x₂ − x₁|</div>
+            <div class="value">{{ finalError }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Iterations</div>
+            <div class="value">{{ iterations.length }}</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <FunctionPlot :series="chartSeries" x-title="x" y-title="f(x)" :width="600" :height="300" />
+        </div>
+
+        <ResultTable title="Iterations" :headers="tableHeaders" :rows="tableRows" />
+      </template>
+      <p v-else class="hint-note">Enter f(x), two initial guesses and tolerance, then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
-import { evaluate } from "mathjs";
+import { evaluate } from 'mathjs';
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import ResultTable from '../ui/ResultTable.vue';
+import FunctionPlot from '../ui/FunctionPlot.vue';
+import { sampleCurve, evalAt } from '@/utils/visual.js';
 
 export default {
-  name: "SecantMethod",
+  name: 'SecantMethod',
+  components: { MethodLayout, MethodButtons, ResultTable, FunctionPlot },
   data() {
     return {
-      functionInput: "x^2 - 4",
+      functionInput: 'x^2 - 4',
       x0: 0,
       x1: 3,
       tolerance: 0.001,
       result: null,
       iterations: [],
       randomFunctions: [
-        "x^3 - 2*x - 5",
-        "x^2 - 4",
-        "sin(x) - 0.5",
-        "x^3 - 4*x + 1",
-        "cos(x) - x",
-        "log(x) - 1",
-        "x^3 - 6*x^2 + 11*x - 6",
-        "tan(x) - x"
+        'x^3 - 2*x - 5',
+        'x^2 - 4',
+        'sin(x) - 0.5',
+        'x^3 - 4*x + 1',
+        'cos(x) - x',
+        'log(x) - 1',
+        'x^3 - 6*x^2 + 11*x - 6',
+        'tan(x) - x',
       ],
     };
+  },
+  computed: {
+    finalError() {
+      const last = this.iterations[this.iterations.length - 1];
+      if (!last) return '0.000000';
+      return Math.abs(Number(last.x2) - Number(last.x1)).toFixed(6);
+    },
+    tableHeaders() {
+      return ['Iteration', 'x₀', 'x₁', 'x₂', 'f(x₂)', 'Error |x₂ − x₁|'];
+    },
+    tableRows() {
+      return this.iterations.map((row, index) => [
+        index + 1,
+        row.x0,
+        row.x1,
+        row.x2,
+        row.fx2,
+        Math.abs(Number(row.x2) - Number(row.x1)).toFixed(6),
+      ]);
+    },
+    chartSeries() {
+      if (!this.iterations.length) return [];
+      const last = this.iterations[this.iterations.length - 1];
+      const a = Number(last.x0);
+      const b = Number(last.x1);
+
+      return [
+        {
+          label: 'f(x)',
+          points: sampleCurve(this.functionInput, Math.min(a, b) - 2, Math.max(a, b) + 2, 240),
+          color: '#124076',
+        },
+        {
+          label: 'secant line',
+          type: 'line',
+          points: [
+            { x: a, y: evalAt(this.functionInput, a) },
+            { x: b, y: evalAt(this.functionInput, b) },
+          ],
+          color: '#e67e22',
+          dashed: true,
+        },
+        {
+          label: 'root',
+          type: 'scatter',
+          points: [{ x: Number(this.result), y: 0 }],
+          color: '#d81b60',
+          pointRadius: 6,
+        },
+      ];
+    },
   },
   methods: {
     randomFunction() {
@@ -89,6 +145,7 @@ export default {
       let x1 = this.x1;
       const f = (x) => evaluate(this.functionInput, { x });
       this.iterations = [];
+      this.result = null;
       let x2;
       let delta;
       let iterationCount = 0;
@@ -115,107 +172,16 @@ export default {
         iterationCount++;
 
         if (iterationCount >= maxIterations) {
-          console.warn("Reached maximum iteration limit");
+          console.warn('Reached maximum iteration limit');
           break;
         }
       } while (delta >= this.tolerance);
 
       this.result = x2.toFixed(6);
     },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+    },
   },
 };
 </script>
-
-<style scoped>
-body {
-  font-family: cursive;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-input {
-  width: 300px;
-  height: 30px;
-}
-
-label {
-  font-size: 15px;
-  font-weight: 580;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-.container {
-  width: 1300px;
-  height: 500px;
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-}
-
-table th,
-table td {
-  padding: 10px;
-  text-align: center;
-}
-
-#box-1 {
-  width: 400px;
-  height: 450px;
-  background-color: #F8FAE5;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  border-radius: 10px;
-}
-
-#box-1 > div {
-  display: flex;
-  flex-direction: column;
-}
-
-#box-2 {
-  width: 600px;
-  height: 450px;
-  background-color: #F8FAE5;
-  overflow-y: auto;
-  border-radius: 10px;
-}
-
-#btn1 {
-  background-color: #124076;
-  color: #FFFFFF;
-  position: relative;
-  top: 10px;
-  left: 225px;
-  border-radius: 5px;
-  font-size: 12px;
-  width: 80px;
-  height: 30px;
-}
-
-#btn2 {
-  position: relative;
-  top: 15px;
-  background-color: #7F9F80;
-  border-radius: 5px;
-  font-size: 16px;
-  width: 120px;
-  height: 40px;
-  font-weight: 620;
-  border: none;
-  color: #FFFFFF;
-}
-
-#btn1:hover, #btn2:hover {
-  background-color: red;
-  transition: 0.2s ease-in;
-  border: none;
-}
-</style>

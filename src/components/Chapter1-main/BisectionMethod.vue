@@ -1,256 +1,196 @@
 <template>
-    <div class="container">
-        <div id="box-1">
-            <h3>Bisection Method</h3>
-            <!-- Input Section -->
-            <div>
-                <label>f(x):</label>
-                <input v-model="functionInput" placeholder="Enter function" />
-                <button @click="randomFunction" id="btn1">Random</button>
-            </div>
-            <div>
-                <label>Lower Bound (a):</label>
-                <input type="number" v-model.number="lowerBound" />
-            </div>
-            <div>
-                <label>Upper Bound (b):</label>
-                <input type="number" v-model.number="upperBound" />
-            </div>
-            <div>
-                <label>Tolerance (ε):</label>
-                <input type="number" v-model.number="tolerance" />
-            </div>
-            <button @click="calculateBisection" id="btn2">Calculate</button>
+  <MethodLayout title="Bisection Method">
+    <template #inputs>
+      <div class="field">
+        <label>f(x)</label>
+        <input v-model="functionInput" placeholder="e.g. x^2 - 4" />
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Lower bound a (xₗ)</label>
+          <input type="number" v-model.number="lowerBound" />
+        </div>
+        <div class="field">
+          <label>Upper bound b (xᵤ)</label>
+          <input type="number" v-model.number="upperBound" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Tolerance ε</label>
+        <input type="number" v-model.number="tolerance" step="0.0001" />
+      </div>
+    </template>
+
+    <template #buttons>
+      <MethodButtons @random="randomFunction" @calculate="calculateBisection" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="result !== null">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Root xₘ</div>
+            <div class="value">{{ result }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Error (b − a) / 2</div>
+            <div class="value">{{ finalError }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Iterations</div>
+            <div class="value">{{ iterations.length }}</div>
+          </div>
         </div>
 
-        <div id="box-2" v-if="iterations.length > 0">
-            <!-- Process and Output Section -->
-            <div  >
-                <h4>Iterations:</h4>
-                <table border="1">
-                    <thead>
-                        <tr>
-                            <th>Iteration</th>
-                            <th>a</th>
-                            <th>b</th>
-                            <th>c</th>
-                            <th>f(c)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(iteration, index) in iterations" :key="index">
-                            <td>{{ index + 1 }}</td>
-                            <td>{{ iteration.a }}</td>
-                            <td>{{ iteration.b }}</td>
-                            <td>{{ iteration.c }}</td>
-                            <td>{{ iteration.fc }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div v-if="result !== null">
-                <h4>Final Result:</h4>
-                <p>Root: {{ result }}</p>
-            </div>
+        <div class="charts">
+          <FunctionPlot :series="chartSeries" x-title="x" y-title="f(x)" :width="600" :height="300" />
         </div>
 
-    </div>
-
-
-
+        <ResultTable title="Iterations" :headers="tableHeaders" :rows="tableRows" />
+      </template>
+      <p v-else class="hint-note">Enter f(x), a bracketing interval [a, b] and tolerance, then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
-import { evaluate } from "mathjs";
+import { evaluate } from 'mathjs';
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import ResultTable from '../ui/ResultTable.vue';
+import FunctionPlot from '../ui/FunctionPlot.vue';
+import { sampleCurve, curveBounds, shadeRect } from '@/utils/visual.js';
 
 export default {
-    name: "BisectionMethod",
-    data() {
-        return {
-            functionInput: "x^2 - 4",
-            lowerBound: 0,
-            upperBound: 3,
-            tolerance: 0.001,
-            result: null,
-            iterations: [], // เก็บข้อมูลแต่ละรอบของการคำนวณ
-            randomFunctions: [
-                "x^3 - 2*x - 5",
-                "x^2 - 4",
-                "sin(x) - 0.5",
-                "x^3 - 4*x + 1",
-                "cos(x) - x",
-                "log(x) - 1",
-                "x^3 - 6*x^2 + 11*x - 6",
-                "tan(x) - x"
-            ],
-        };
+  name: 'BisectionMethod',
+  components: { MethodLayout, MethodButtons, ResultTable, FunctionPlot },
+  data() {
+    return {
+      functionInput: 'x^2 - 4',
+      lowerBound: 0,
+      upperBound: 3,
+      tolerance: 0.001,
+      result: null,
+      iterations: [],
+      randomFunctions: [
+        'x^3 - 2*x - 5',
+        'x^2 - 4',
+        'sin(x) - 0.5',
+        'x^3 - 4*x + 1',
+        'cos(x) - x',
+        'log(x) - 1',
+        'x^3 - 6*x^2 + 11*x - 6',
+        'tan(x) - x',
+      ],
+    };
+  },
+  computed: {
+    finalError() {
+      const last = this.iterations[this.iterations.length - 1];
+      if (!last) return '0.000000';
+      return ((Number(last.b) - Number(last.a)) / 2).toFixed(6);
     },
-    methods: {
-        // ฟังก์ชันสุ่มฟังก์ชัน f(x)
-        randomFunction() {
-            const randomIndex = Math.floor(Math.random() * this.randomFunctions.length);
-            this.functionInput = this.randomFunctions[randomIndex];
-        },
-        // ฟังก์ชันคำนวณ Bisection Method
-        calculateBisection() {
-            let a = this.lowerBound;
-            let b = this.upperBound;
-            const f = (x) => evaluate(this.functionInput, { x });
-            let c;
-            this.iterations = []; // รีเซ็ตการเก็บข้อมูลในแต่ละรอบ
-            this.result = null;
-
-            const fa = f(a);
-            const fb = f(b);
-
-            if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
-                alert("The function is not defined at the bounds. Please check your inputs.");
-                return;
-            }
-
-            if (fa * fb > 0) {
-                alert("The function must have different signs at the bounds a and b.");
-                return;
-            }
-
-            c = (a + b) / 2;
-
-            // เริ่มทำการวนลูปหาผลลัพธ์
-            let iterationCount = 0;
-            while ((b - a) / 2 > this.tolerance) {
-                c = (a + b) / 2;
-                const fc = f(c);
-
-                if (!Number.isFinite(fc)) {
-                    alert("The function could not be evaluated inside the interval. Please check your inputs.");
-                    return;
-                }
-
-                // เก็บข้อมูลของแต่ละรอบการคำนวณ
-                this.iterations.push({
-                    a: a.toFixed(6),
-                    b: b.toFixed(6),
-                    c: c.toFixed(6),
-                    fc: fc.toFixed(6),
-                });
-
-                // ตรวจสอบเงื่อนไขการสิ้นสุด
-                if (fc === 0) {
-                    break; // เจอรากที่แน่นอน
-                } else if (f(a) * fc < 0) {
-                    b = c;
-                } else {
-                    a = c;
-                }
-
-                iterationCount++;
-                if (iterationCount > 1000) {
-                    // เพื่อป้องกันการวนลูปไม่สิ้นสุด
-                    console.warn("Reached maximum iteration limit");
-                    break;
-                }
-            }
-
-            // กำหนดผลลัพธ์สุดท้าย
-            this.result = c.toFixed(6);
-        },
+    tableHeaders() {
+      return ['Iteration', 'a', 'b', 'xₘ', 'f(xₘ)', 'Error'];
     },
+    tableRows() {
+      return this.iterations.map((row, index) => [
+        index + 1,
+        row.a,
+        row.b,
+        row.c,
+        row.fc,
+        ((Number(row.b) - Number(row.a)) / 2).toFixed(6),
+      ]);
+    },
+    chartSeries() {
+      if (!this.iterations.length) return [];
+      const first = this.iterations[0];
+      const last = this.iterations[this.iterations.length - 1];
+      const a0 = Number(first.a);
+      const b0 = Number(first.b);
+      const la = Number(last.a);
+      const lb = Number(last.b);
+      const [yMin, yMax] = curveBounds(this.functionInput, la, lb);
+
+      return [
+        ...shadeRect(la, lb, yMin, yMax, 'rgba(255,140,50,0.25)'),
+        { label: 'f(x)', points: sampleCurve(this.functionInput, a0, b0, 240), color: '#124076' },
+        {
+          label: 'root',
+          type: 'scatter',
+          points: [{ x: Number(this.result), y: 0 }],
+          color: '#d81b60',
+          pointRadius: 6,
+        },
+      ];
+    },
+  },
+  methods: {
+    randomFunction() {
+      const randomIndex = Math.floor(Math.random() * this.randomFunctions.length);
+      this.functionInput = this.randomFunctions[randomIndex];
+    },
+    calculateBisection() {
+      let a = this.lowerBound;
+      let b = this.upperBound;
+      const f = (x) => evaluate(this.functionInput, { x });
+      let c;
+      this.iterations = [];
+      this.result = null;
+
+      const fa = f(a);
+      const fb = f(b);
+
+      if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
+        alert('The function is not defined at the bounds. Please check your inputs.');
+        return;
+      }
+
+      if (fa * fb > 0) {
+        alert('The function must have different signs at the bounds a and b.');
+        return;
+      }
+
+      c = (a + b) / 2;
+
+      let iterationCount = 0;
+      while ((b - a) / 2 > this.tolerance) {
+        c = (a + b) / 2;
+        const fc = f(c);
+
+        if (!Number.isFinite(fc)) {
+          alert('The function could not be evaluated inside the interval. Please check your inputs.');
+          return;
+        }
+
+        this.iterations.push({
+          a: a.toFixed(6),
+          b: b.toFixed(6),
+          c: c.toFixed(6),
+          fc: fc.toFixed(6),
+        });
+
+        if (fc === 0) {
+          break;
+        } else if (f(a) * fc < 0) {
+          b = c;
+        } else {
+          a = c;
+        }
+
+        iterationCount++;
+        if (iterationCount > 1000) {
+          console.warn('Reached maximum iteration limit');
+          break;
+        }
+      }
+
+      this.result = c.toFixed(6);
+    },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+    },
+  },
 };
 </script>
-
-<style scoped>
-body {
-    font-family: cursive;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-input {
-    width: 300px;
-    height: 30px;
-}
-
-label {
-    font-size: 15px;
-    font-weight: 580;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-
-}
-
-.container{
-    width: 1300px;
-    height: 500px;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-}
-
-table th,
-table td {
-    padding: 10px;
-    text-align: center;
-}
-
-#box-1 {
-    width: 400px;
-    height: 450px;
-    background-color: #F8FAE5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    border-radius: 10px;
-    
-}
-
-#box-1>div {
-    display: flex;
-    flex-direction: column;
-}
-
-
-#box-2 {
-    width: 600px;
-    height: 450px;
-    background-color: #F8FAE5;
-    overflow-y: auto;
-    border-radius: 10px;
-}
-
-#btn1{
-    background-color: #124076;
-    color: #FFFFFF;
-    position: relative;
-    top: 10px;
-    left: 225px;
-    border-radius: 5px;
-    font-size: 12px;
-    width: 80px;
-    height: 30px;
-}
-
-#btn2{
-    position: relative;
-    top: 15px;
-    background-color: #7F9F80;  
-    border-radius: 5px;
-    font-size: 16px;
-    width: 120px;
-    height: 40px;
-    font-weight: 620;
-    border: none;
-    color: #FFFFFF;
-}
-
-#btn1:hover,#btn2:hover{
-    background-color: red;
-    transition: 0.2s ease-in;
-    border: none;
-}
-</style>

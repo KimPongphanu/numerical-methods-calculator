@@ -1,83 +1,139 @@
 <template>
-  <div class="container">
-    <!-- Input Section -->
-    <div id="box-1">
-      <h3>False Position Method</h3>
-      <div>
-        <label>f(x):</label>
-        <input v-model="functionInput" placeholder="Enter function" />
-        <button @click="randomFunction" id="btn1">Random</button>
+  <MethodLayout title="False Position Method">
+    <template #inputs>
+      <div class="field">
+        <label>f(x)</label>
+        <input v-model="functionInput" placeholder="e.g. x^2 - 4" />
       </div>
-      <div>
-        <label>Lower Bound (a):</label>
-        <input type="number" v-model.number="lowerBound" />
+      <div class="field-row">
+        <div class="field">
+          <label>Lower bound a</label>
+          <input type="number" v-model.number="lowerBound" />
+        </div>
+        <div class="field">
+          <label>Upper bound b</label>
+          <input type="number" v-model.number="upperBound" />
+        </div>
       </div>
-      <div>
-        <label>Upper Bound (b):</label>
-        <input type="number" v-model.number="upperBound" />
+      <div class="field">
+        <label>Tolerance ε</label>
+        <input type="number" v-model.number="tolerance" step="0.0001" />
       </div>
-      <div>
-        <label>Tolerance (ε):</label>
-        <input type="number" v-model.number="tolerance" />
-      </div>
-      <button @click="calculateFalsePosition" id="btn2">Calculate</button>
-    </div>
+    </template>
 
-    <!-- Output Section -->
-    <div id="box-2" v-if="iterations.length > 0">
-      <h4>Iterations:</h4>
-      <table border="1">
-        <thead>
-          <tr>
-            <th>Iteration</th>
-            <th>a</th>
-            <th>b</th>
-            <th>c</th>
-            <th>f(c)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(iteration, index) in iterations" :key="index">
-            <td>{{ index + 1 }}</td>
-            <td>{{ iteration.a }}</td>
-            <td>{{ iteration.b }}</td>
-            <td>{{ iteration.c }}</td>
-            <td>{{ iteration.fc }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <div v-if="result !== null">
-        <h4>Final Result:</h4>
-        <p>Root: {{ result }}</p>
-      </div>
-    </div>
-  </div>
+    <template #buttons>
+      <MethodButtons @random="randomFunction" @calculate="calculateFalsePosition" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="result !== null">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Root xᵣ</div>
+            <div class="value">{{ result }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Error |f(xᵣ)|</div>
+            <div class="value">{{ finalError }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Iterations</div>
+            <div class="value">{{ iterations.length }}</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <FunctionPlot :series="chartSeries" x-title="x" y-title="f(x)" :width="600" :height="300" />
+        </div>
+
+        <ResultTable title="Iterations" :headers="tableHeaders" :rows="tableRows" />
+      </template>
+      <p v-else class="hint-note">Enter f(x), a bracketing interval [a, b] and tolerance, then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
-import { evaluate } from "mathjs";
+import { evaluate } from 'mathjs';
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import ResultTable from '../ui/ResultTable.vue';
+import FunctionPlot from '../ui/FunctionPlot.vue';
+import { sampleCurve, evalAt } from '@/utils/visual.js';
 
 export default {
-  name: "FalsePositionMethod",
+  name: 'FalsePositionMethod',
+  components: { MethodLayout, MethodButtons, ResultTable, FunctionPlot },
   data() {
     return {
-      functionInput: "x^2 - 4",
+      functionInput: 'x^2 - 4',
       lowerBound: 0,
       upperBound: 3,
       tolerance: 0.001,
       result: null,
       iterations: [],
       randomFunctions: [
-        "x^3 - 2*x - 5",
-        "x^2 - 4",
-        "sin(x) - 0.5",
-        "x^3 - 4*x + 1",
-        "cos(x) - x",
-        "log(x) - 1",
-        "x^3 - 6*x^2 + 11*x - 6",
-        "tan(x) - x"
+        'x^3 - 2*x - 5',
+        'x^2 - 4',
+        'sin(x) - 0.5',
+        'x^3 - 4*x + 1',
+        'cos(x) - x',
+        'log(x) - 1',
+        'x^3 - 6*x^2 + 11*x - 6',
+        'tan(x) - x',
       ],
     };
+  },
+  computed: {
+    finalError() {
+      const last = this.iterations[this.iterations.length - 1];
+      if (!last) return '0.000000';
+      return Math.abs(Number(last.fc)).toFixed(6);
+    },
+    tableHeaders() {
+      return ['Iteration', 'a', 'b', 'xᵣ', 'f(xᵣ)', 'Error |f(xᵣ)|'];
+    },
+    tableRows() {
+      return this.iterations.map((row, index) => [
+        index + 1,
+        row.a,
+        row.b,
+        row.c,
+        row.fc,
+        Math.abs(Number(row.fc)).toFixed(6),
+      ]);
+    },
+    chartSeries() {
+      if (!this.iterations.length) return [];
+      const last = this.iterations[this.iterations.length - 1];
+      const a = Number(last.a);
+      const b = Number(last.b);
+
+      return [
+        {
+          label: 'f(x)',
+          points: sampleCurve(this.functionInput, Number(this.iterations[0].a), Number(this.iterations[0].b), 240),
+          color: '#124076',
+        },
+        {
+          label: 'secant line',
+          type: 'line',
+          points: [
+            { x: a, y: evalAt(this.functionInput, a) },
+            { x: b, y: evalAt(this.functionInput, b) },
+          ],
+          color: '#e67e22',
+          dashed: true,
+        },
+        {
+          label: 'root',
+          type: 'scatter',
+          points: [{ x: Number(this.result), y: 0 }],
+          color: '#d81b60',
+          pointRadius: 6,
+        },
+      ];
+    },
   },
   methods: {
     randomFunction() {
@@ -96,12 +152,12 @@ export default {
       const fb = f(b);
 
       if (!Number.isFinite(fa) || !Number.isFinite(fb)) {
-        alert("The function is not defined at the bounds. Please check your inputs.");
+        alert('The function is not defined at the bounds. Please check your inputs.');
         return;
       }
 
       if (fa * fb > 0) {
-        alert("The function must have different signs at the bounds a and b.");
+        alert('The function must have different signs at the bounds a and b.');
         return;
       }
 
@@ -111,7 +167,7 @@ export default {
         const fc = f(c);
 
         if (!Number.isFinite(fc)) {
-          alert("The function could not be evaluated inside the interval. Please check your inputs.");
+          alert('The function could not be evaluated inside the interval. Please check your inputs.');
           return;
         }
 
@@ -130,108 +186,16 @@ export default {
 
         iterationCount++;
         if (iterationCount > 1000) {
-          console.warn("Reached maximum iteration limit");
+          console.warn('Reached maximum iteration limit');
           break;
         }
       } while (Math.abs(f(c)) > this.tolerance);
 
       this.result = c.toFixed(6);
     },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+    },
   },
 };
 </script>
-
-<style scoped>
-body {
-    font-family: cursive;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-input {
-    width: 300px;
-    height: 30px;
-}
-
-label {
-    font-size: 15px;
-    font-weight: 580;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-
-}
-
-.container {
-    width: 1300px;
-    height: 500px;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-}
-
-table th,
-table td {
-    padding: 10px;
-    text-align: center;
-}
-
-#box-1 {
-    width: 400px;
-    height: 450px;
-    background-color: #F8FAE5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    border-radius: 10px;
-}
-
-#box-1 > div {
-    display: flex;
-    flex-direction: column;
-}
-
-#box-2 {
-    width: 600px;
-    height: 450px;
-    background-color: #F8FAE5;
-    overflow-y: auto;
-    border-radius: 10px;
-}
-
-#btn1 {
-    background-color: #124076;
-    color: #FFFFFF;
-    position: relative;
-    top: 10px;
-    left: 225px;
-    border-radius: 5px;
-    font-size: 12px;
-    width: 80px;
-    height: 30px;
-}
-
-#btn2 {
-    position: relative;
-    top: 15px;
-    background-color: #7F9F80;
-    border-radius: 5px;
-    font-size: 16px;
-    width: 120px;
-    height: 40px;
-    font-weight: 620;
-    border: none;
-    color: #FFFFFF;
-}
-
-#btn1:hover, #btn2:hover {
-    background-color: red;
-    transition: 0.2s ease-in;
-    border: none;
-}
-</style>

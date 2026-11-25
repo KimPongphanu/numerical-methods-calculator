@@ -1,42 +1,50 @@
 <template>
-
   <div class="container">
-
     <div>
       <section class="box1" style="display: flex">
         <h1>NUMERICAL METHOD</h1>
-        <h1 v-if="chaptersArray.length > 0"> >> {{ chaptersArray[selectedChapterIndex].chapter }}</h1>
+        <h1 v-if="chaptersArray.length > 0">
+          >> {{ chaptersArray[selectedChapterIndex].chapter }}
+        </h1>
       </section>
     </div>
 
     <div>
-
       <section>
-
         <!-- <div class="menuChapter" v-if="chaptersDB.length">
           <div v-for="(chapther, index) in chaptersDB" :key="index" class="menuChapter-child" @click="selection(index)">
             <h1>{{ chapther.chapter }}</h1>
           </div>
         </div> -->
         <div v-if="isDropdownOpen">
-          <navChapter @chapter-selected="handleChapterSelected" @chapter-array="handleChapterArray" />
+          <navChapter
+            @chapter-selected="handleChapterSelected"
+            @chapter-array="handleChapterArray"
+          />
         </div>
-
       </section>
-
     </div>
 
     <div class="boxChapter">
       <section>
-
         <div class="dropDown" v-if="isDropdownOpen">
-          <div class="dropDownChild" v-for="(item, index) in chapterLists[selectedChapterIndex]" :key="index"
-            :style="getItemStyle(chapterLists[selectedChapterIndex].length)" @click="ClickedDropdownMenu(index)"
-            :class="{ selected: CurrentdropdownMenu === index }">
+          <div
+            class="dropDownChild"
+            v-for="(item, index) in chapterLists[selectedChapterIndex]"
+            :key="index"
+            :style="[
+              getItemStyle(chapterLists[selectedChapterIndex].length),
+              getItemFontStyle(
+                item.method,
+                chapterLists[selectedChapterIndex].length,
+              ),
+            ]"
+            @click="ClickedDropdownMenu(index)"
+            :class="{ selected: CurrentdropdownMenu === index }"
+          >
             <h1>{{ item.method }}</h1>
           </div>
         </div>
-
 
         <div class="mainContent">
           <section>
@@ -45,130 +53,273 @@
               {{ chapterLists[selectedChapterIndex][CurrentdropdownMenu].method }}
             </h1> -->
             <div class="childContent">
-
               <div id="mainMethod">
-                <div v-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC1[0]">
+                <div
+                  v-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC1[0]
+                  "
+                >
                   <BisectionMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC1[1]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC1[1]
+                  "
+                >
                   <FalsePositionMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC1[2]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC1[2]
+                  "
+                >
                   <OnePointIterationMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC1[3]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC1[3]
+                  "
+                >
                   <SecantMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC1[4]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC1[4]
+                  "
+                >
                   <NewtonRaphson />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[0]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[0]
+                  "
+                >
                   <CramersRule />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[1]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[1]
+                  "
+                >
                   <GaussElimination />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[2]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[2]
+                  "
+                >
                   <GaussJordanMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[3]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[3]
+                  "
+                >
                   <InverseMatrixMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[4]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[4]
+                  "
+                >
                   <LuDecompositionMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[5]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[5]
+                  "
+                >
                   <CholeskyDecompositionMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[6]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[6]
+                  "
+                >
                   <JacobiIterationMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[7]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[7]
+                  "
+                >
                   <GaussSeidelIterationMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC2[8]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC2[8]
+                  "
+                >
                   <ConjugateGradientMethod />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC3[0]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC3[0]
+                  "
+                >
                   <NewtonsDividedDifferences />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC3[1]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC3[1]
+                  "
+                >
                   <LagrangePolynomials />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC3[2]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC3[2]
+                  "
+                >
                   <SplineInterpolation />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC4[0]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC4[0]
+                  "
+                >
                   <LinearRegression />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC4[1]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC4[1]
+                  "
+                >
                   <PolynomialRegression />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC4[2]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC4[2]
+                  "
+                >
                   <MultipleLinearRegression />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC5[0]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[0]
+                  "
+                >
                   <TrapezoidalRule />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC5[1]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[1]
+                  "
+                >
                   <CompositeTrapezoidalRule />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC5[2]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[2]
+                  "
+                >
                   <SimpsonRule />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex][CurrentdropdownMenu] === methodC5[3]">
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[3]
+                  "
+                >
                   <CompositeSimpsonRule />
                 </div>
-                <div v-else-if="chapterLists[selectedChapterIndex] && chapterLists[selectedChapterIndex].length > 0">
-                  <p class="notImplemented">This method is not implemented yet.</p>
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[4]
+                  "
+                >
+                  <NewtonCotesFormulas />
+                </div>
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[5]
+                  "
+                >
+                  <RombergIntegration />
+                </div>
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex][CurrentdropdownMenu] ===
+                    methodC5[6]
+                  "
+                >
+                  <GaussQuadrature />
+                </div>
+                <div
+                  v-else-if="
+                    chapterLists[selectedChapterIndex] &&
+                    chapterLists[selectedChapterIndex].length > 0
+                  "
+                >
+                  <p class="notImplemented">
+                    This method is not implemented yet.
+                  </p>
                 </div>
               </div>
-
             </div>
           </section>
-
         </div>
       </section>
     </div>
-
-
-
   </div>
-
 </template>
 
 <script>
-import navChapter from "./components/navChapter.vue";
-import BisectionMethod from './components/Chapter1-main/BisectionMethod.vue';
-import FalsePositionMethod from './components/Chapter1-main/FalsePositionMethod.vue';
-import OnePointIterationMethod from './components/Chapter1-main/OnePointIteration.vue';
-import SecantMethod from './components/Chapter1-main/SecantMethod.vue';
-import NewtonRaphson from './components/Chapter1-main/NewtonRaphson.vue';
-import CramersRule from './components/Chapter2-main/CramersRule.vue';
-import GaussElimination from './components/Chapter2-main/GaussElimination.vue';
-import GaussJordanMethod from './components/Chapter2-main/GaussJordanMethod.vue';
-import InverseMatrixMethod from './components/Chapter2-main/InverseMatrixMethod.vue';
-import LuDecompositionMethod from './components/Chapter2-main/LuDecompositionMethod.vue';
-import CholeskyDecompositionMethod from './components/Chapter2-main/CholeskyDecompositionMethod.vue';
-import JacobiIterationMethod from './components/Chapter2-main/JacobiIterationMethod.vue';
-import GaussSeidelIterationMethod from './components/Chapter2-main/GaussSeidelIterationMethod.vue';
-import ConjugateGradientMethod from './components/Chapter2-main/ConjugateGradientMethod.vue';
-import NewtonsDividedDifferences from './components/Chapter3-main/NewtonsDividedDifferences.vue';
-import LagrangePolynomials from './components/Chapter3-main/LagrangePolynomials.vue';
-import SplineInterpolation from './components/Chapter3-main/SplineInterpolation.vue';
-import LinearRegression from './components/Chapter4-main/LinearRegression.vue';
-import PolynomialRegression from './components/Chapter4-main/PolynomialRegression.vue';
-import MultipleLinearRegression from './components/Chapter4-main/MultipleLinearRegression.vue';
-import TrapezoidalRule from './components/Chapter5-main/TrapezoidalRule.vue';
-import CompositeTrapezoidalRule from './components/Chapter5-main/CompositeTrapezoidalRule.vue';
-import SimpsonRule from './components/Chapter5-main/SimpsonRule.vue';
-import CompositeSimpsonRule from './components/Chapter5-main/CompositeSimpsonRule.vue';
+import BisectionMethod from './components/Chapter1-main/BisectionMethod.vue'
+import FalsePositionMethod from './components/Chapter1-main/FalsePositionMethod.vue'
+import NewtonRaphson from './components/Chapter1-main/NewtonRaphson.vue'
+import OnePointIterationMethod from './components/Chapter1-main/OnePointIteration.vue'
+import SecantMethod from './components/Chapter1-main/SecantMethod.vue'
+import CholeskyDecompositionMethod from './components/Chapter2-main/CholeskyDecompositionMethod.vue'
+import ConjugateGradientMethod from './components/Chapter2-main/ConjugateGradientMethod.vue'
+import CramersRule from './components/Chapter2-main/CramersRule.vue'
+import GaussElimination from './components/Chapter2-main/GaussElimination.vue'
+import GaussJordanMethod from './components/Chapter2-main/GaussJordanMethod.vue'
+import GaussSeidelIterationMethod from './components/Chapter2-main/GaussSeidelIterationMethod.vue'
+import InverseMatrixMethod from './components/Chapter2-main/InverseMatrixMethod.vue'
+import JacobiIterationMethod from './components/Chapter2-main/JacobiIterationMethod.vue'
+import LuDecompositionMethod from './components/Chapter2-main/LuDecompositionMethod.vue'
+import LagrangePolynomials from './components/Chapter3-main/LagrangePolynomials.vue'
+import NewtonsDividedDifferences from './components/Chapter3-main/NewtonsDividedDifferences.vue'
+import SplineInterpolation from './components/Chapter3-main/SplineInterpolation.vue'
+import LinearRegression from './components/Chapter4-main/LinearRegression.vue'
+import MultipleLinearRegression from './components/Chapter4-main/MultipleLinearRegression.vue'
+import PolynomialRegression from './components/Chapter4-main/PolynomialRegression.vue'
+import CompositeSimpsonRule from './components/Chapter5-main/CompositeSimpsonRule.vue'
+import CompositeTrapezoidalRule from './components/Chapter5-main/CompositeTrapezoidalRule.vue'
+import GaussQuadrature from './components/Chapter5-main/GaussQuadrature.vue'
+import NewtonCotesFormulas from './components/Chapter5-main/NewtonCotesFormulas.vue'
+import RombergIntegration from './components/Chapter5-main/RombergIntegration.vue'
+import SimpsonRule from './components/Chapter5-main/SimpsonRule.vue'
+import TrapezoidalRule from './components/Chapter5-main/TrapezoidalRule.vue'
+import navChapter from './components/navChapter.vue'
 
-
-
-
-
-import { methods } from './data/methods.js';
+import { methods } from './data/methods.js'
 
 export default {
   name: 'App',
@@ -198,6 +349,9 @@ export default {
     CompositeTrapezoidalRule,
     SimpsonRule,
     CompositeSimpsonRule,
+    NewtonCotesFormulas,
+    RombergIntegration,
+    GaussQuadrature,
   },
   data() {
     return {
@@ -222,62 +376,71 @@ export default {
       this.methodC2,
       this.methodC3,
       this.methodC4,
-      this.methodC5
-    ];
-    methods.forEach(item => {
+      this.methodC5,
+    ]
+    methods.forEach((item) => {
       switch (item.chapter) {
         case 1:
-          this.methodC1.push(item);
-          break;
+          this.methodC1.push(item)
+          break
         case 2:
-          this.methodC2.push(item);
-          break;
+          this.methodC2.push(item)
+          break
         case 3:
-          this.methodC3.push(item);
-          break;
+          this.methodC3.push(item)
+          break
         case 4:
-          this.methodC4.push(item);
-          break;
+          this.methodC4.push(item)
+          break
         case 5:
-          this.methodC5.push(item);
-          break;
+          this.methodC5.push(item)
+          break
         default:
-          console.warn('Chapter not found in data:', item.chapter);
-          break;
+          console.warn('Chapter not found in data:', item.chapter)
+          break
       }
-    });
+    })
   },
   methods: {
     handleChapterSelected(index) {
-      this.selectedChapterIndex = index; // เก็บค่า index ที่ได้รับจาก navChapter
-      this.CurrentdropdownMenu = 0;
-      this.solution = null;
+      this.selectedChapterIndex = index // เก็บค่า index ที่ได้รับจาก navChapter
+      this.CurrentdropdownMenu = 0
+      this.solution = null
     },
     handleChapterArray(array) {
-      this.chaptersArray = array;
+      this.chaptersArray = array
     },
     dropdown() {
-      this.isDropdownOpen = !this.isDropdownOpen;
+      this.isDropdownOpen = !this.isDropdownOpen
     },
     ClickedDropdownMenu(index) {
-      this.CurrentdropdownMenu = index;
-      this.solution = null;
+      this.CurrentdropdownMenu = index
+      this.solution = null
     },
     getItemStyle(contentCount) {
-      const containerWidth = 1330; // ความกว้างของ dropdown ทั้งหมด
-      const widthPerItem = containerWidth / contentCount; // คำนวณความกว้างต่อคอนเทนต์
+      const containerWidth = 1330 // ความกว้างของ dropdown ทั้งหมด
+      const widthPerItem = containerWidth / contentCount // คำนวณความกว้างต่อคอนเทนต์
       return {
-        width: `${widthPerItem}px`, // ส่งกลับค่า style ให้กับแต่ละคอนเทนต์
-      };
+        width: `${widthPerItem}px`, // ส่งกลับ style ให้กับแต่ละคอนเทนต์
+      }
+    },
+    getItemFontStyle(text, contentCount) {
+      const containerWidth = 1330
+      const widthPerItem = containerWidth / contentCount
+      const available = Math.max(widthPerItem - 10, 40)
+      const label = String(text ?? '')
+      const estimatedGlyphWidth = 0.62 // สัดส่วนความกว้างต่อตัวอักษรของฟอนต์ monospace
+      const fitOneLine =
+        available / Math.max(label.length * estimatedGlyphWidth, 1)
+      const fontSize = Math.max(12, Math.min(16, fitOneLine)) // ต่ำสุด 12px, สูงสุด 16px
+      return {
+        fontSize: `${fontSize.toFixed(2)}px`,
+        lineHeight: 1.2,
+      }
     },
   },
-
-};
-
+}
 </script>
-
-
-
 
 <style>
 @font-face {
@@ -303,7 +466,7 @@ body {
   height: 708px;
   padding: 0;
   margin-top: -10px;
-  background-color: #06113C;
+  background-color: #06113c;
   overflow-x: hidden;
   overflow-y: hidden;
 }
@@ -321,23 +484,19 @@ body {
   overflow: hidden;
 }
 
-
 #app {
-
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-
 }
 
 .box1 {
   display: flex;
   width: 1366px;
   height: 80px;
-  background-color: #FF8C32;
-
+  background-color: #ff8c32;
 }
 
 .box1 h1 {
@@ -351,8 +510,7 @@ body {
 .menuChapter {
   display: inline-flex;
   flex-direction: row;
-  background-color: #FFFFFF;
-
+  background-color: #ffffff;
 }
 
 .menuChapter-child {
@@ -362,20 +520,20 @@ body {
   /* width: 241.3333px; */
   width: 273.2px;
   height: 60px;
-  font-size: 14px;
+  font-size: 13px;
   font-family: monospace;
   cursor: pointer;
 }
 
 .menuChapter-child:nth-child(even) {
-  background-color: #DDDDDD;
+  background-color: #dddddd;
 }
 
 .menuChapter-child:nth-child(odd) {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
 }
 
-.menuChapter:hover>:not(:hover) {
+.menuChapter:hover > :not(:hover) {
   filter: blur(5px);
   opacity: 0.5;
 }
@@ -385,9 +543,8 @@ body {
   width: 1360px;
   height: 600px;
   /* background-color: #948979; */
-  background-color: #EEEDEB;
+  background-color: #eeedeb;
   overflow: hidden;
-
 }
 
 .dropDown {
@@ -398,26 +555,34 @@ body {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-
 }
 
 .dropDownChild {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 16px;
   font-family: monospace;
   height: 50px;
-  overflow: hidden;
+  overflow: auto;
   margin: 2px;
-  background-color: #06113C;
-  color: #FFFFFF;
+  background-color: #06113c;
+  color: #ffffff;
   cursor: pointer;
 }
 
 .dropDownChild:hover {
-  background-color: #B0B1B2;
+  background-color: #b0b1b2;
   /* เปลี่ยนสีเมื่อ hover เพื่อแสดงการตอบสนองของเมนู */
+}
+
+.dropDownChild h1 {
+  font-size: inherit;
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .mainContent {
@@ -435,7 +600,7 @@ body {
   gap: 5px;
 }
 
-.childContent>div {
+.childContent > div {
   margin: 0;
 }
 
@@ -453,6 +618,6 @@ body {
 .notImplemented {
   margin-top: 120px;
   font-size: 24px;
-  color: #06113C;
+  color: #06113c;
 }
 </style>

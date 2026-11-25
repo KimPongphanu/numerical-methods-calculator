@@ -93,6 +93,24 @@ describe('App.vue methods', () => {
     expect(App.methods.getItemStyle.call(ctx, 1)).toEqual({ width: '1330px' });
   });
 
+  it('getItemFontStyle caps short labels at the maximum size', () => {
+    const ctx = createContext(App);
+    const style = App.methods.getItemFontStyle.call(ctx, 'Spline', 3);
+    expect(style.fontSize).toBe('16.00px');
+  });
+
+  it('getItemFontStyle floors long labels at the minimum size', () => {
+    const ctx = createContext(App);
+    const style = App.methods.getItemFontStyle.call(ctx, 'Newton Cotes Integration Formulas', 7);
+    expect(style.fontSize).toBe('12.00px');
+  });
+
+  it('getItemFontStyle never goes below 12px', () => {
+    const ctx = createContext(App);
+    const style = App.methods.getItemFontStyle.call(ctx, 'x'.repeat(120), 9);
+    expect(style.fontSize).toBe('12.00px');
+  });
+
   it('starts with five empty chapter method buckets', () => {
     const ctx = createContext(App);
     expect(ctx.methodC1).toEqual([]);

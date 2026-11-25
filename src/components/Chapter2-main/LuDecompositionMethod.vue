@@ -1,305 +1,188 @@
-/* eslint-disable */
 <template>
-    <div class="container">
-        <!-- Input Section -->
-        <div id="box-1">
-            <div id="box-left">
-                <!-- Section Title -->
-                <div id="box-11">
-                    <h3>LU Decomposition Method</h3>
-                    <label>Number of Variables (n):</label>
-                    <input type="number" v-model.number="numVariables" min="2" max="4" @change="initializeMatrices" />
-                </div>
-
-                <!-- Coefficient Matrix Section -->
-                <div id="box-12" v-if="numVariables > 0">
-                    <h4>Coefficient Matrix (A)</h4>
-                    <div class="matrix-grid" :style="{ gridTemplateColumns: `repeat(${numVariables}, 1fr)` }">
-                        <div v-for="(row, rowIndex) in matrixA" :key="'row-' + rowIndex">
-                            <div v-for="(value, colIndex) in row" :key="'col-' + colIndex" class="matrix-cell">
-                                <input type="number" v-model.number="matrixA[rowIndex][colIndex]" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Constant Vector Section -->
-            <div id="box-right">
-                <div id="box-13" v-if="numVariables > 0">
-                    <h4>Constant Vector (B)</h4>
-                    <div class="vector-section">
-                        <div v-for="(value, index) in vectorB" :key="'b-' + index" class="vector-cell">
-                            <input type="number" v-model.number="vectorB[index]" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buttons Section -->
-            <div id="box-last">
-                <div id="box-14">
-                    <button @click="randomizeMatrices">Randomize Test Data</button>
-                    <button @click="calculateLuDecomposition">Calculate</button>
-                </div>
-                <!-- Output Section -->
-                <div id="box-2" v-if="solutions.length > 0">
-                    <h4>Solutions:</h4>
-                    <ul>
-                        <li v-for="(solution, index) in solutions" :key="'solution-' + index">
-                            x{{ index + 1 }} = {{ solution }}
-                        </li>
-                    </ul>
-                </div>
-            </div>
+  <MethodLayout title="LU Decomposition Method">
+    <template #inputs>
+      <div class="field">
+        <label>Number of variables n</label>
+        <input type="number" v-model.number="numVariables" min="2" max="4" @change="initializeMatrices" />
+      </div>
+      <div class="field">
+        <label>Coefficient matrix A</label>
+        <div class="matrix-grid" :style="{ gridTemplateColumns: `repeat(${numVariables}, 1fr)` }">
+          <div v-for="(row, rowIndex) in matrixA" :key="'row-' + rowIndex" style="display: contents">
+            <input
+              v-for="(value, colIndex) in row"
+              :key="'col-' + colIndex"
+              type="number"
+              v-model.number="matrixA[rowIndex][colIndex]"
+            />
+          </div>
         </div>
-    </div>
+      </div>
+      <div class="field">
+        <label>Constant vector B</label>
+        <div class="matrix-grid" :style="{ gridTemplateColumns: '1fr' }">
+          <input
+            v-for="(value, index) in vectorB"
+            :key="'b-' + index"
+            type="number"
+            v-model.number="vectorB[index]"
+          />
+        </div>
+      </div>
+    </template>
+
+    <template #buttons>
+      <MethodButtons random-label="Randomize Data" @random="randomizeMatrices" @calculate="calculateLuDecomposition" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="solutions.length > 0 && factors">
+        <div class="stats">
+          <div v-for="(solution, index) in solutions" :key="'x-' + index" class="stat">
+            <div class="label">x{{ index + 1 }}</div>
+            <div class="value">{{ solution }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">y (Ly = Pb)</div>
+            <div class="value">{{ factors.y.map((v) => v.toFixed(4)).join(', ') }}</div>
+          </div>
+        </div>
+
+        <div>
+          <h4>P·A = L · U</h4>
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px">
+            <MatrixGrid label="L (lower)" :matrix="formatMatrix(factors.L)" highlight-diagonal />
+            <MatrixGrid label="U (upper)" :matrix="formatMatrix(factors.U)" />
+            <MatrixGrid label="P (permutation)" :matrix="formatMatrix(permutationMatrix)" />
+          </div>
+        </div>
+      </template>
+      <p v-else class="hint-note">Set n, fill matrix A and vector B, then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import MatrixGrid from '../ui/MatrixGrid.vue';
+
 export default {
-    name: "LuDecompositionMethod",
-    data() {
-        return {
-            numVariables: 2,
-            matrixA: [],
-            vectorB: [],
-            solutions: []
-        };
+  name: 'LuDecompositionMethod',
+  components: { MethodLayout, MethodButtons, MatrixGrid },
+  data() {
+    return {
+      numVariables: 2,
+      matrixA: [],
+      vectorB: [],
+      solutions: [],
+      factors: null,
+    };
+  },
+  computed: {
+    permutationMatrix() {
+      if (!this.factors) return [];
+      const n = this.factors.permutation.length;
+      return this.factors.permutation.map((rowIndex) =>
+        Array.from({ length: n }, (_, col) => (col === rowIndex ? 1 : 0))
+      );
     },
-    created() {
-        this.initializeMatrices();
+  },
+  created() {
+    this.initializeMatrices();
+  },
+  methods: {
+    formatMatrix(M) {
+      return M.map((row) => row.map((value) => Number(value).toFixed(4)));
     },
-    methods: {
-        initializeMatrices() {
-            this.matrixA = Array.from({ length: this.numVariables }, () =>
-                Array(this.numVariables).fill(0)
-            );
-            this.vectorB = Array(this.numVariables).fill(0);
-        },
-        randomizeMatrices() {
-            this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 20 - 10).toFixed(2)));
-            this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
-        },
-        calculateLuDecomposition() {
-            this.solutions = [];
-            try {
-                const n = this.numVariables;
-                const A = this.matrixA.map(row => row.map(Number));
-                const b = this.vectorB.map(Number);
-                const L = Array.from({ length: n }, () => Array(n).fill(0));
-                const U = A.map(row => [...row]);
-                const permutation = Array.from({ length: n }, (_, index) => index);
+    initializeMatrices() {
+      this.matrixA = Array.from({ length: this.numVariables }, () =>
+        Array(this.numVariables).fill(0)
+      );
+      this.vectorB = Array(this.numVariables).fill(0);
+    },
+    randomizeMatrices() {
+      this.matrixA = this.matrixA.map(row => row.map(() => (Math.random() * 20 - 10).toFixed(2)));
+      this.vectorB = this.vectorB.map(() => (Math.random() * 20 - 10).toFixed(2));
+    },
+    calculateLuDecomposition() {
+      this.solutions = [];
+      this.factors = null;
+      try {
+        const n = this.numVariables;
+        const A = this.matrixA.map(row => row.map(Number));
+        const b = this.vectorB.map(Number);
+        const L = Array.from({ length: n }, () => Array(n).fill(0));
+        const U = A.map(row => [...row]);
+        const permutation = Array.from({ length: n }, (_, index) => index);
 
-                for (let i = 0; i < n; i++) {
-                    let pivotRow = i;
-                    for (let k = i + 1; k < n; k++) {
-                        if (Math.abs(U[k][i]) > Math.abs(U[pivotRow][i])) {
-                            pivotRow = k;
-                        }
-                    }
-
-                    if (U[pivotRow][i] === 0) {
-                        alert("The coefficient matrix is singular. The system has no unique solution.");
-                        return;
-                    }
-
-                    if (pivotRow !== i) {
-                        [U[i], U[pivotRow]] = [U[pivotRow], U[i]];
-                        [permutation[i], permutation[pivotRow]] = [permutation[pivotRow], permutation[i]];
-                        for (let k = 0; k < i; k++) {
-                            [L[i][k], L[pivotRow][k]] = [L[pivotRow][k], L[i][k]];
-                        }
-                    }
-
-                    L[i][i] = 1;
-                    for (let k = i + 1; k < n; k++) {
-                        const factor = U[k][i] / U[i][i];
-                        L[k][i] = factor;
-                        for (let j = i; j < n; j++) {
-                            U[k][j] -= factor * U[i][j];
-                        }
-                    }
-                }
-
-                const permutedB = permutation.map(index => b[index]);
-
-                const y = Array(n).fill(0);
-                for (let i = 0; i < n; i++) {
-                    let sum = permutedB[i];
-                    for (let k = 0; k < i; k++) {
-                        sum -= L[i][k] * y[k];
-                    }
-                    y[i] = sum;
-                }
-
-                const x = Array(n).fill(0);
-                for (let i = n - 1; i >= 0; i--) {
-                    let sum = y[i];
-                    for (let k = i + 1; k < n; k++) {
-                        sum -= U[i][k] * x[k];
-                    }
-                    x[i] = sum / U[i][i];
-                }
-
-                if (x.some(value => !Number.isFinite(value))) {
-                    alert("The system could not be solved with the given inputs.");
-                    return;
-                }
-
-                this.solutions = x.map(value => value.toFixed(6));
-            } catch (error) {
-                console.error("Error calculating LU Decomposition Method:", error);
-                alert("An error occurred while calculating the solutions. Please check your inputs.");
+        for (let i = 0; i < n; i++) {
+          let pivotRow = i;
+          for (let k = i + 1; k < n; k++) {
+            if (Math.abs(U[k][i]) > Math.abs(U[pivotRow][i])) {
+              pivotRow = k;
             }
+          }
+
+          if (U[pivotRow][i] === 0) {
+            alert('The coefficient matrix is singular. The system has no unique solution.');
+            return;
+          }
+
+          if (pivotRow !== i) {
+            [U[i], U[pivotRow]] = [U[pivotRow], U[i]];
+            [permutation[i], permutation[pivotRow]] = [permutation[pivotRow], permutation[i]];
+            for (let k = 0; k < i; k++) {
+              [L[i][k], L[pivotRow][k]] = [L[pivotRow][k], L[i][k]];
+            }
+          }
+
+          L[i][i] = 1;
+          for (let k = i + 1; k < n; k++) {
+            const factor = U[k][i] / U[i][i];
+            L[k][i] = factor;
+            for (let j = i; j < n; j++) {
+              U[k][j] -= factor * U[i][j];
+            }
+          }
         }
-    }
+
+        const permutedB = permutation.map(index => b[index]);
+
+        const y = Array(n).fill(0);
+        for (let i = 0; i < n; i++) {
+          let sum = permutedB[i];
+          for (let k = 0; k < i; k++) {
+            sum -= L[i][k] * y[k];
+          }
+          y[i] = sum;
+        }
+
+        const x = Array(n).fill(0);
+        for (let i = n - 1; i >= 0; i--) {
+          let sum = y[i];
+          for (let k = i + 1; k < n; k++) {
+            sum -= U[i][k] * x[k];
+          }
+          x[i] = sum / U[i][i];
+        }
+
+        if (x.some(value => !Number.isFinite(value))) {
+          alert('The system could not be solved with the given inputs.');
+          return;
+        }
+
+        this.solutions = x.map(value => value.toFixed(6));
+        this.factors = { L, U, permutation, y };
+      } catch (error) {
+        console.error('Error calculating LU Decomposition Method:', error);
+        alert('An error occurred while calculating the solutions. Please check your inputs.');
+      }
+    },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+      this.initializeMatrices();
+    },
+  },
 };
 </script>
-
-<style scoped>
-body {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-input {
-    width: 80px;
-    height: 30px;
-    margin: 5px;
-}
-
-label {
-    font-size: 20px;
-    margin-bottom: 5px;
-}
-
-button {
-    width: 150px;
-    height: 35px;
-    margin-top: 15px;
-}
-
-.container {
-    position: relative;
-    top: 20px;
-    width: 1300px;
-    height: 460px;
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    overflow: auto;
-}
-
-#box-1 {
-    position: relative;
-    top: 0;
-    margin-top: 40px;
-    width: 1200px;
-    height: 650px;
-    background-color: #FEFBF6;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    border-radius: 8px;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-#box-left {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#box-right {
-    display: flex;
-    flex-direction: column;
-}
-
-#box-last {
-    display: flex;
-    flex-direction: column;
-}
-
-#box-11 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-#box-12 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    width: 600px;
-}
-
-.matrix-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
-}
-
-.matrix-cell {
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-.vector-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.vector-cell {
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-#box-13 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-#box-14 {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background-color: #f7fef6;
-    padding: 10px;
-    border-radius: 8px;
-    z-index: 10;
-}
-
-#box-2 {
-    width: 200px;
-    height: 200px;
-    background-color: #3cff00;
-    border-radius: 10px;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 18px;
-}
-
-h3,
-h4 {
-    text-align: center;
-}
-</style>

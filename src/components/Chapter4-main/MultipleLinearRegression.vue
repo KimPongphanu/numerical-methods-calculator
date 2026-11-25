@@ -1,232 +1,182 @@
-/* eslint-disable */
 <template>
-    <div class="container">
-        <!-- Input Section -->
-        <div id="box-1">
-            <div id="box-left">
-                <!-- Section Title -->
-                <div id="box-11">
-                    <h3>Multiple Linear Regression</h3>
-                    <label>Number of Data Points (n):</label>
-                    <input type="number" v-model.number="numPoints" min="2" max="10" @change="initializeData" />
-                    <label>Number of Features (m):</label>
-                    <input type="number" v-model.number="numFeatures" min="1" max="5" @change="initializeData" />
-                </div>
-
-                <!-- Data Points Section -->
-                <div id="box-12" v-if="numPoints > 0 && numFeatures > 0">
-                    <h4>Data Points</h4>
-                    <div class="data-grid" :style="{ gridTemplateColumns: `repeat(${Math.min(numPoints, 5)}, 1fr)` }">
-                        <div v-for="(point, index) in dataPoints" :key="'point-' + index" class="data-cell">
-                            <div v-for="featureIndex in numFeatures" :key="'feature-' + featureIndex">
-                                <label>X{{ index + 1 }}{{ featureIndex }}:</label>
-                                <input type="number" v-model.number="dataPoints[index].features[featureIndex - 1]" />
-                            </div>
-                            <label>Y{{ index + 1 }}:</label>
-                            <input type="number" v-model.number="dataPoints[index].y" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Buttons Section -->
-            <div id="box-last">
-                <div id="box-14">
-                    <button @click="randomizeDataPoints">Randomize Test Data</button>
-                    <button @click="calculateMultipleLinearRegression">Calculate</button>
-                </div>
-                <!-- Output Section -->
-                <div id="box-2" v-if="coefficients.length > 0">
-                    <h4>Multiple Linear Regression Coefficients:</h4>
-                    <ul>
-                        <li>Intercept (a0) = {{ coefficients[0].toFixed(4) }}</li>
-                        <li v-for="(coef, index) in coefficients.slice(1)" :key="'coef-' + index">Coefficient a{{ index + 1 }} = {{ coef.toFixed(4) }}</li>
-                    </ul>
-                </div>
-            </div>
+  <MethodLayout title="Multiple Linear Regression">
+    <template #inputs>
+      <div class="field-row">
+        <div class="field">
+          <label>Number of data points n</label>
+          <input type="number" v-model.number="numPoints" min="2" max="10" @change="initializeData" />
         </div>
-    </div>
+        <div class="field">
+          <label>Number of features m</label>
+          <input type="number" v-model.number="numFeatures" min="1" max="5" @change="initializeData" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Data points (features and y)</label>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <div v-for="(point, index) in dataPoints" :key="'point-' + index" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap">
+            <span style="font-size: 12px; width: 22px">{{ index + 1 }}.</span>
+            <input
+              v-for="featureIndex in numFeatures"
+              :key="'feature-' + featureIndex"
+              type="number"
+              v-model.number="dataPoints[index].features[featureIndex - 1]"
+              :placeholder="`x${featureIndex}`"
+              style="width: 64px"
+            />
+            <input type="number" v-model.number="dataPoints[index].y" placeholder="y" style="width: 64px" />
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template #buttons>
+      <MethodButtons random-label="Randomize Data" @random="randomizeDataPoints" @calculate="calculateMultipleLinearRegression" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="coefficients.length > 0">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">R²</div>
+            <div class="value">{{ r2.toFixed(4) }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Intercept a₀</div>
+            <div class="value">{{ coefficients[0].toFixed(4) }}</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <FunctionPlot :series="chartSeries" x-title="actual y" y-title="predicted ŷ" :width="480" :height="320" />
+        </div>
+
+        <div>
+          <h4>Regression equation</h4>
+          <div class="equation">{{ equationText }}</div>
+        </div>
+
+        <ResultTable
+          title="Actual vs predicted"
+          :headers="['Point', 'Actual y', 'Predicted ŷ', 'Error']"
+          :rows="comparisonRows"
+        />
+      </template>
+      <p v-else class="hint-note">Enter the data (n must exceed the number of coefficients), then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
-import * as math from "mathjs";
+import * as math from 'mathjs';
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import ResultTable from '../ui/ResultTable.vue';
+import FunctionPlot from '../ui/FunctionPlot.vue';
+import { r2FromPairs } from '@/utils/visual.js';
 
 export default {
-    name: "MultipleLinearRegression",
-    data() {
-        return {
-            numPoints: 2,
-            numFeatures: 1,
-            dataPoints: [],
-            coefficients: []
-        };
+  name: 'MultipleLinearRegression',
+  components: { MethodLayout, MethodButtons, ResultTable, FunctionPlot },
+  data() {
+    return {
+      numPoints: 2,
+      numFeatures: 1,
+      dataPoints: [],
+      coefficients: [],
+      predictions: [],
+      r2: null,
+    };
+  },
+  computed: {
+    equationText() {
+      if (!this.coefficients.length) return '';
+      const terms = this.coefficients
+        .map((c, k) => (k === 0 ? `${c.toFixed(4)}` : `${c >= 0 ? '+ ' : '- '}${Math.abs(c).toFixed(4)}·x${k}`))
+        .join(' ');
+      return `ŷ = ${terms}`;
     },
-    created() {
-        this.initializeData();
+    comparisonRows() {
+      return this.dataPoints.map((point, index) => [
+        index + 1,
+        point.y.toFixed(4),
+        this.predictions[index].toFixed(4),
+        Math.abs(point.y - this.predictions[index]).toFixed(4),
+      ]);
     },
-    methods: {
-        initializeData() {
-            this.dataPoints = Array.from({ length: this.numPoints }, () => ({
-                features: Array.from({ length: this.numFeatures }, () => 0),
-                y: 0
-            }));
+    chartSeries() {
+      if (!this.coefficients.length) return [];
+      const all = [...this.dataPoints.map((p) => p.y), ...this.predictions];
+      const lo = Math.min(...all) - 1;
+      const hi = Math.max(...all) + 1;
+
+      return [
+        { label: 'y = ŷ', type: 'line', points: [{ x: lo, y: lo }, { x: hi, y: hi }], color: '#8d8d8d', dashed: true },
+        {
+          label: 'points',
+          type: 'scatter',
+          points: this.dataPoints.map((p, index) => ({ x: p.y, y: this.predictions[index] })),
+          color: '#124076',
+          pointRadius: 5,
         },
-        randomizeDataPoints() {
-            this.dataPoints = this.dataPoints.map(point => ({
-                features: point.features.map(() => parseFloat((Math.random() * 10).toFixed(2))),
-                y: parseFloat((Math.random() * 10).toFixed(2))
-            }));
-        },
-        calculateMultipleLinearRegression() {
-            this.coefficients = [];
-            try {
-                const X = this.dataPoints.map(point => [1, ...point.features]);
-                const Y = this.dataPoints.map(point => point.y);
+      ];
+    },
+  },
+  created() {
+    this.initializeData();
+  },
+  methods: {
+    initializeData() {
+      this.dataPoints = Array.from({ length: this.numPoints }, () => ({
+        features: Array.from({ length: this.numFeatures }, () => 0),
+        y: 0,
+      }));
+    },
+    randomizeDataPoints() {
+      this.dataPoints = this.dataPoints.map(point => ({
+        features: point.features.map(() => parseFloat((Math.random() * 10).toFixed(2))),
+        y: parseFloat((Math.random() * 10).toFixed(2)),
+      }));
+    },
+    calculateMultipleLinearRegression() {
+      this.coefficients = [];
+      this.predictions = [];
+      this.r2 = null;
+      try {
+        const X = this.dataPoints.map(point => [1, ...point.features]);
+        const Y = this.dataPoints.map(point => point.y);
 
-                // Calculating (X^T * X)^-1 * X^T * Y
-                const XT = math.transpose(X);
-                const XTX = math.multiply(XT, X);
-                if (math.det(XTX) === 0) {
-                    throw new Error("Matrix is singular and cannot be inverted.");
-                }
-                const XTXInv = math.inv(XTX);
-                const XTY = math.multiply(XT, Y);
-                const coefficients = math.multiply(XTXInv, XTY);
-
-                if (coefficients.some(value => !Number.isFinite(value))) {
-                    alert("The coefficients could not be calculated. Please check your inputs.");
-                    return;
-                }
-
-                this.coefficients = coefficients;
-            } catch (error) {
-                console.error("Error calculating Multiple Linear Regression:", error);
-                alert("An error occurred while calculating the coefficients. Please check your inputs. Matrix might be singular.");
-            }
+        const XT = math.transpose(X);
+        const XTX = math.multiply(XT, X);
+        if (math.det(XTX) === 0) {
+          throw new Error('Matrix is singular and cannot be inverted.');
         }
-    }
+        const XTXInv = math.inv(XTX);
+        const XTY = math.multiply(XT, Y);
+        const coefficients = math.multiply(XTXInv, XTY);
+
+        if (coefficients.some(value => !Number.isFinite(value))) {
+          alert('The coefficients could not be calculated. Please check your inputs.');
+          return;
+        }
+
+        this.coefficients = coefficients;
+        this.predictions = this.dataPoints.map(point =>
+          coefficients.reduce((sum, c, k) => sum + c * (k === 0 ? 1 : point.features[k - 1]), 0)
+        );
+        this.r2 = r2FromPairs(
+          this.dataPoints.map((p) => p.y),
+          this.predictions
+        );
+      } catch (error) {
+        console.error('Error calculating Multiple Linear Regression:', error);
+        alert('An error occurred while calculating the coefficients. Please check your inputs. Matrix might be singular.');
+      }
+    },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+      this.initializeData();
+    },
+  },
 };
 </script>
-
-<style scoped>
-body {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-input {
-    width: 80px;
-    height: 30px;
-    margin: 5px;
-}
-
-label {
-    font-size: 16px;
-    margin-bottom: 5px;
-}
-
-button {
-    width: 150px;
-    height: 35px;
-    margin-top: 15px;
-}
-
-.container {
-    position: relative;
-    top: 20px;
-    width: 1300px;
-    height: 460px;
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    overflow: auto;
-}
-
-#box-1 {
-    position: relative;
-    top: 0;
-    margin-top: 40px;
-    width: 1200px;
-    height: 650px;
-    background-color: #FEFBF6;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    border-radius: 8px;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-#box-left {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#box-last {
-    display: flex;
-    flex-direction: column;
-}
-
-#box-11 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-#box-12 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    width: 600px;
-}
-
-.data-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
-}
-
-.data-cell {
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-#box-14 {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background-color: #f7fef6;
-    padding: 10px;
-    border-radius: 8px;
-    z-index: 10;
-}
-
-#box-2 {
-    width: 300px;
-    height: auto;
-    background-color: #3cff00;
-    border-radius: 10px;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    text-align: left;
-    flex-direction: column;
-    align-items: center;
-    font-size: 18px;
-}
-
-h3,
-h4 {
-    text-align: center;
-}
-</style>

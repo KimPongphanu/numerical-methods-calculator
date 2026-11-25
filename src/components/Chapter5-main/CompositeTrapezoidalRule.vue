@@ -1,238 +1,202 @@
 <template>
-    <div class="container">
-        <!-- Input Section -->
-        <div id="box-1">
-            <div id="box-left">
-                <!-- Section Title -->
-                <div id="box-11">
-                    <h3>Composite Trapezoidal Rule</h3>
-                    <label>Lower Limit (a):</label>
-                    <input type="number" v-model.number="lowerLimit" />
-                    <label>Upper Limit (b):</label>
-                    <input type="number" v-model.number="upperLimit" />
-                    <label>Number of Intervals (n):</label>
-                    <input type="number" v-model.number="numIntervals" min="1" />
-                </div>
-
-                <!-- Function Section -->
-                <div id="box-12">
-                    <h4>Function f(x)</h4>
-                    <input type="text" v-model="functionExpression" placeholder="Enter function of x (e.g., x^2 + 3)" />
-                </div>
-            </div>
-
-            <!-- Buttons Section -->
-            <div id="box-last">
-                <div id="box-14">
-                    <button @click="randomizeFunctionAndData">Randomize Function & Values</button>
-                    <button @click="calculateTrapezoidalRule">Calculate</button>
-                </div>
-                <!-- Output Section -->
-                <div id="box-2" v-if="result !== null">
-                    <h4>Composite Trapezoidal Rule Result:</h4>
-                    <p>Approximate Integral Value: {{ result.toFixed(4) }}</p>
-                </div>
-            </div>
+  <MethodLayout title="Composite Trapezoidal Rule">
+    <template #inputs>
+      <div class="field-row">
+        <div class="field">
+          <label>Lower limit a</label>
+          <input type="number" v-model.number="lowerLimit" />
         </div>
-    </div>
+        <div class="field">
+          <label>Upper limit b</label>
+          <input type="number" v-model.number="upperLimit" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Number of intervals n</label>
+        <input type="number" v-model.number="numIntervals" min="1" />
+      </div>
+      <div class="field">
+        <label>Function f(x)</label>
+        <input v-model="functionExpression" placeholder="e.g. x^2 + 3" />
+      </div>
+    </template>
+
+    <template #buttons>
+      <MethodButtons random-label="Random" @random="randomizeFunctionAndData" @calculate="calculateTrapezoidalRule" @reset="reset" />
+    </template>
+
+    <template #output>
+      <template v-if="result !== null">
+        <div class="stats">
+          <div class="stat">
+            <div class="label">Integral ≈</div>
+            <div class="value">{{ result.toFixed(6) }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Est. error</div>
+            <div class="value">{{ error.toFixed(6) }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Intervals</div>
+            <div class="value">{{ numIntervals }}</div>
+          </div>
+        </div>
+
+        <div class="charts">
+          <FunctionPlot :series="chartSeries" x-title="x" y-title="f(x)" :width="600" :height="320" />
+        </div>
+
+        <ResultTable
+          title="Nodes"
+          :headers="['i', 'xᵢ', 'f(xᵢ)', 'Weight']"
+          :rows="nodeRows"
+        />
+      </template>
+      <p v-else class="hint-note">Enter f(x), the interval [a, b] and n, then press Calculate.</p>
+    </template>
+  </MethodLayout>
 </template>
 
 <script>
-import * as math from "mathjs";
+import * as math from 'mathjs';
+import MethodLayout from '../ui/MethodLayout.vue';
+import MethodButtons from '../ui/MethodButtons.vue';
+import ResultTable from '../ui/ResultTable.vue';
+import FunctionPlot from '../ui/FunctionPlot.vue';
+import { sampleCurve, compositeTrapezoid } from '@/utils/visual.js';
 
 export default {
-    name: "CompositeTrapezoidalRule",
-    data() {
-        return {
-            lowerLimit: 0,
-            upperLimit: 1,
-            numIntervals: 1,
-            functionExpression: "",
-            result: null
-        };
+  name: 'CompositeTrapezoidalRule',
+  components: { MethodLayout, MethodButtons, ResultTable, FunctionPlot },
+  data() {
+    return {
+      lowerLimit: 0,
+      upperLimit: 1,
+      numIntervals: 1,
+      functionExpression: '',
+      result: null,
+      error: null,
+    };
+  },
+  computed: {
+    nodeRows() {
+      if (this.result === null) return [];
+      const n = Math.floor(this.numIntervals);
+      const a = this.lowerLimit;
+      const b = this.upperLimit;
+      const h = (b - a) / n;
+      const f = math.parse(this.functionExpression).compile();
+      const rows = [];
+      for (let i = 0; i <= n; i += 1) {
+        const x = a + i * h;
+        const weight = i === 0 || i === n ? '1' : '2';
+        rows.push([i, x.toFixed(4), f.evaluate({ x }).toFixed(6), weight]);
+      }
+      return rows;
     },
-    methods: {
-        calculateTrapezoidalRule() {
-            this.result = null;
-            try {
-                const expression = (this.functionExpression || "").trim();
-                if (!expression) {
-                    alert("Please enter a function f(x).");
-                    return;
-                }
+    chartSeries() {
+      if (this.result === null) return [];
+      const n = Math.floor(this.numIntervals);
+      const a = this.lowerLimit;
+      const b = this.upperLimit;
+      const h = (b - a) / n;
+      const f = math.parse(this.functionExpression).compile();
+      const nodes = [];
+      for (let i = 0; i <= n; i += 1) {
+        const x = a + i * h;
+        nodes.push({ x, y: f.evaluate({ x }) });
+      }
 
-                const a = this.lowerLimit;
-                const b = this.upperLimit;
-                const n = Math.floor(this.numIntervals);
-
-                if (n < 1) {
-                    alert("Number of intervals (n) must be at least 1.");
-                    return;
-                }
-
-                const f = math.parse(expression).compile();
-                const h = (b - a) / n;
-
-                let sum = 0;
-                for (let i = 0; i <= n; i++) {
-                    const x = a + i * h;
-                    const fx = f.evaluate({ x });
-                    if (i === 0 || i === n) {
-                        sum += fx;
-                    } else {
-                        sum += 2 * fx;
-                    }
-                }
-
-                const result = (h / 2) * sum;
-
-                if (!Number.isFinite(result)) {
-                    alert("The function could not be evaluated on the given interval. Please check your inputs.");
-                    return;
-                }
-
-                this.result = result;
-            } catch (error) {
-                console.error("Error calculating Trapezoidal Rule:", error);
-                alert("An error occurred while calculating the integral. Please check your inputs.");
-            }
+      return [
+        {
+          label: 'area under f(x)',
+          type: 'line',
+          points: sampleCurve(this.functionExpression, a, b, 200),
+          color: '#124076',
+          fill: 'origin',
+          fillColor: 'rgba(18,64,118,0.18)',
         },
-        randomizeFunctionAndData() {
-            const functions = [
-                "x^2 + 3",
-                "sin(x) + 2",
-                "x^3 - 4*x + 1",
-                "cos(x) + x",
-                "e^x - x"
-            ];
-            this.functionExpression = functions[Math.floor(Math.random() * functions.length)];
-            this.lowerLimit = parseFloat((Math.random() * 10).toFixed(2));
-            this.upperLimit = parseFloat((Math.random() * 10 + this.lowerLimit).toFixed(2));
-            this.numIntervals = Math.floor(Math.random() * 10) + 1;
+        {
+          label: 'trapezoid tops',
+          type: 'line',
+          points: nodes,
+          color: '#e67e22',
+          dashed: true,
+        },
+        {
+          label: 'nodes',
+          type: 'scatter',
+          points: nodes,
+          color: '#e67e22',
+          pointRadius: 3,
+        },
+      ];
+    },
+  },
+  methods: {
+    calculateTrapezoidalRule() {
+      this.result = null;
+      this.error = null;
+      try {
+        const expression = (this.functionExpression || '').trim();
+        if (!expression) {
+          alert('Please enter a function f(x).');
+          return;
         }
-    }
+
+        const a = this.lowerLimit;
+        const b = this.upperLimit;
+        const n = Math.floor(this.numIntervals);
+
+        if (n < 1) {
+          alert('Number of intervals (n) must be at least 1.');
+          return;
+        }
+
+        const f = math.parse(expression).compile();
+        const h = (b - a) / n;
+
+        let sum = 0;
+        for (let i = 0; i <= n; i++) {
+          const x = a + i * h;
+          const fx = f.evaluate({ x });
+          if (i === 0 || i === n) {
+            sum += fx;
+          } else {
+            sum += 2 * fx;
+          }
+        }
+
+        const result = (h / 2) * sum;
+
+        if (!Number.isFinite(result)) {
+          alert('The function could not be evaluated on the given interval. Please check your inputs.');
+          return;
+        }
+
+        this.result = result;
+        this.error = Math.abs(result - compositeTrapezoid(expression, a, b, n * 2));
+      } catch (error) {
+        console.error('Error calculating Trapezoidal Rule:', error);
+        alert('An error occurred while calculating the integral. Please check your inputs.');
+      }
+    },
+    randomizeFunctionAndData() {
+      const functions = [
+        'x^2 + 3',
+        'sin(x) + 2',
+        'x^3 - 4*x + 1',
+        'cos(x) + x',
+        'e^x - x',
+      ];
+      this.functionExpression = functions[Math.floor(Math.random() * functions.length)];
+      this.lowerLimit = parseFloat((Math.random() * 10).toFixed(2));
+      this.upperLimit = parseFloat((Math.random() * 10 + this.lowerLimit).toFixed(2));
+      this.numIntervals = Math.floor(Math.random() * 10) + 1;
+    },
+    reset() {
+      Object.assign(this, this.$options.data.call(this));
+    },
+  },
 };
 </script>
-
-<style scoped>
-body {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-input {
-    width: 150px;
-    height: 30px;
-    margin: 5px;
-}
-
-label {
-    font-size: 16px;
-    margin-bottom: 5px;
-}
-
-button {
-    width: 150px;
-    height: 35px;
-    margin-top: 15px;
-}
-
-.container {
-    position: relative;
-    top: 20px;
-    width: 1300px;
-    height: 460px;
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    overflow: auto;
-}
-
-#box-1 {
-    position: relative;
-    top: 0;
-    margin-top: 40px;
-    width: 1200px;
-    height: 650px;
-    background-color: #FEFBF6;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 20px;
-    border-radius: 8px;
-    padding: 20px;
-    box-sizing: border-box;
-    overflow-y: auto;
-}
-
-#box-left {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#box-last {
-    display: flex;
-    flex-direction: column;
-}
-
-#box-11 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-#box-12 {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    width: 600px;
-}
-
-.data-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
-}
-
-.data-cell {
-    border: 1px solid #ccc;
-    padding: 5px;
-    border-radius: 5px;
-}
-
-#box-14 {
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background-color: #f7fef6;
-    padding: 10px;
-    border-radius: 8px;
-    z-index: 10;
-}
-
-#box-2 {
-    width: 300px;
-    height: auto;
-    background-color: #3cff00;
-    border-radius: 10px;
-    overflow-y: auto;
-    padding: 20px;
-    display: flex;
-    text-align: left;
-    flex-direction: column;
-    align-items: center;
-    font-size: 18px;
-}
-
-h3,
-h4 {
-    text-align: center;
-}
-</style>
